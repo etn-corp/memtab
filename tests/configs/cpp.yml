@@ -1,0 +1,44 @@
+Project: Hello World
+CPU:
+  name: "x86"
+  memory regions:
+    - Flash:
+        - name: FLASH
+          start: "0x08000000"
+          size: "0x10000"
+    - RAM:
+        - name: RAM
+          start: "0x20000000"
+          size: "0x8000"
+
+Source Code:
+  root: "/home/devuser/riot/RIOT/"
+  categories:
+    - name: CPP Stuff
+      categories:
+        - name: C++ Code
+          patterns: ["::"]
+    - name: RIOT OS
+      categories:
+        - name: Core
+          patterns: ["core/"]
+        - name: Auto Init
+          patterns: ["sys/auto_init/"]
+        - name: Native CPU
+          patterns: ["cpu/native/"]
+        - name: Drivers
+          patterns: ["drivers/"]
+        - name: Other
+          patterns: ["dummy", "deregister_tm_clones"]
+    - name: Stdlib
+      categories:
+        - name: StdLib
+          patterns: ["stdlib", "stdint", "/usr/include/"]
+        - name: Gnu
+          patterns: ["GNU"]
+        - name: Globals
+          patterns: ["global", "init"]
+        - name: Relocatable
+          patterns: ["relocate"]
+        - name: Dynamic
+          patterns: ["DYNAMIC"]

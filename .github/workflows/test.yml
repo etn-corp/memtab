@@ -1,0 +1,74 @@
+---
+name: 'pytest'
+
+on:
+    pull_request:
+    push:
+      branches:
+        - main
+jobs:
+  test:
+    name: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false  # continue running jobs even if one fails to allow for a more clear and complete picture of error conditions
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the project
+        run: uv sync --dev
+
+      - name: Install the Arm Crosscompiler Toolchain (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          wget https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
+          tar xf arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
+
+      - name: Install the Arm Crosscompiler Toolchain (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          choco install wget
+          wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-win32.zip
+          7z x gcc-arm-none-eabi-10.3-2021.10-win32.zip
+
+      - name: Install the Xtensa Crosscompiler Toolchain (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          wget https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/xtensa-esp-elf-14.2.0_20241119-x86_64-linux-gnu.tar.xz
+          tar xf xtensa-esp-elf-14.2.0_20241119-x86_64-linux-gnu.tar.xz
+
+      - name: Install the Xtensa Crosscompiler Toolchain (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          choco install wget
+          wget https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/xtensa-esp-elf-14.2.0_20241119-x86_64-w64-mingw32.zip
+          7z x xtensa-esp-elf-14.2.0_20241119-x86_64-w64-mingw32.zip
+
+      - name: Run tests (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          export PATH=$PWD/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin:$PATH
+          export PATH=$PWD/xtensa-esp-elf/bin:$PATH
+          uv run coverage run -m pytest tests --cucumberjson=cucumber.json
+        shell: bash
+
+      - name: Run tests (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          $env:PATH += ";$PWD\gcc-arm-none-eabi-10.3-2021.10\bin"
+          $env:PATH += ";$PWD\xtensa-esp-elf\bin"
+          uv run coverage run -m pytest tests --cucumberjson=cucumber.json -k "not local_source"  # we ignore local_source tests in windows because the x86 binary readelf command is not identical
+      - name: Publish Results
+        uses: ./.github/actions/publish_test_results
+        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest'  && matrix.python-version == '3.13' }} # provide coverage data even if tests failed
+        with:
+          access-token: ${{ secrets.GITHUB_TOKEN }}
+...

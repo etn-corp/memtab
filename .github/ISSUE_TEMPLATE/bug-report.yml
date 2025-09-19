@@ -1,0 +1,46 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+projects: ["etn-corp/memtab"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: elf-file
+    attributes:
+      label: Input ELF File
+      description: Can be a URL, or you could attach it to this bug.
+      placeholder: Path to the elf file used as input
+    validations:
+      required: true
+  - type: input
+    id: yaml-file
+    attributes:
+      label: Input YAML Config File
+      description: Can be a URL, or you could attach it to this bug.
+      placeholder: Path to the config file used as input
+    validations:
+      required: true
+  - type: input
+    id: gcc-prefix
+    attributes:
+      label: Input GCC toolchain, if applicable
+      description: to help know where to install it from
+      placeholder: gcc prefix
+  - type: checkboxes
+    id: OS
+    attributes:
+      label: What operating system(s) are you seeing the problem on?
+      options:
+        - label: Windows
+        - label: Linux
+        - label: Mac OSX
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell

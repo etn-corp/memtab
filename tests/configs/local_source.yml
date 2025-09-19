@@ -1,0 +1,18 @@
+Project: Hello World
+CPU:
+  gcc_prefix: ""
+  name: "x86"
+
+  memory regions:
+    - Flash:
+        - name: FLASH
+          start: "0x08000000"
+          size: "0x10000"
+    - RAM:
+        - name: RAM
+          start: "0x20000000"
+          size: "0x8000"
+
+
+include:
+  - local_source_categories.yml

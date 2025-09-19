@@ -1,0 +1,245 @@
+{
+    "type": "object",
+    "properties": {
+        "Project": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The project name.  This is used to correlate this build with a project.  A project CAN have multiple builds (repositories) associated with it."
+        },
+        "ELF": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional path to the ELF file to analyze. If another path is specified on the command line, that path will override this one."
+        },
+        "CPU": {
+            "$ref": "#/$defs/cpu"
+        },
+        "SourceCode": {
+            "$ref": "#/$defs/source_code"
+        },
+        "Source Code": {
+            "$ref": "#/$defs/source_code"
+        },
+        "include": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+                "minLength": 1
+            },
+            "description": "path to other config file(s) to include"
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "cpu": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "memory regions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/memory_regions"
+                    }
+                },
+                "memory_regions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/memory_regions"
+                    }
+                },
+                "gcc_prefix": {
+                    "type": "string"
+                }
+            },
+            "oneOf": [
+                {
+                    "required": [
+                        "name",
+                        "memory regions"
+                    ]
+                },
+                {
+                    "required": [
+                        "name",
+                        "memory_regions"
+                    ]
+                }
+            ],
+            "additionalProperties": false
+        },
+        "source_code": {
+            "type": "object",
+            "properties": {
+                "root": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "categories": {
+                    "$ref": "#/$defs/categories"
+                }
+            }
+        },
+        "memory_region": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/$defs/memory"
+            }
+        },
+        "memory": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/memory_start_size"
+                },
+                {
+                    "$ref": "#/$defs/memory_start_end"
+                }
+            ]
+        },
+        "memory_start_end": {
+            "properties": {
+                "name:": {
+                    "type": "string"
+                },
+                "start": {
+                    "$ref": "#/$defs/dec_or_hex"
+                },
+                "end": {
+                    "$ref": "#/$defs/dec_or_hex"
+                }
+            },
+            "required": [
+                "name",
+                "start",
+                "end"
+            ]
+        },
+        "memory_start_size": {
+            "properties": {
+                "name:": {
+                    "type": "string"
+                },
+                "start": {
+                    "$ref": "#/$defs/dec_or_hex"
+                },
+                "size": {
+                    "$ref": "#/$defs/dec_or_hex"
+                }
+            },
+            "required": [
+                "name",
+                "start",
+                "size"
+            ]
+        },
+        "memory_regions": {
+            "type": "object",
+            "oneOf": [
+                {
+                    "properties": {
+                        "Code": {
+                            "$ref": "#/$defs/memory_region"
+                        }
+                    },
+                    "required": [
+                        "Code"
+                    ]
+                },
+                {
+                    "properties": {
+                        "Flash": {
+                            "$ref": "#/$defs/memory_region"
+                        }
+                    },
+                    "required": [
+                        "Flash"
+                    ]
+                },
+                {
+                    "properties": {
+                        "RAM": {
+                            "$ref": "#/$defs/memory_region"
+                        }
+                    },
+                    "required": [
+                        "RAM"
+                    ]
+                }
+            ]
+        },
+        "dec_or_hex": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "pattern": "^(0x[0-9a-fA-F]+|[0-9]+)$"
+                },
+                {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            ]
+        },
+        "categories": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/category"
+            }
+        },
+        "category": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "patterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "regexes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "files": {
+                    "$ref": "#/$defs/pattern_or_regex"
+                },
+                "directories": {
+                    "$ref": "#/$defs/pattern_or_regex"
+                },
+                "symbols": {
+                    "$ref": "#/$defs/pattern_or_regex"
+                },
+                "categories": {
+                    "$ref": "#/$defs/categories"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name"
+            ]
+        },
+        "pattern_or_regex": {
+            "properties": {
+                "patterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "regexes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,7 @@
+*.json
+*.svg
+*.html
+*.md
+*.db
+*.sql
+local_source.elf

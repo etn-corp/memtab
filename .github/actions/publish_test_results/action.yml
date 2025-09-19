@@ -1,0 +1,38 @@
+name: 'Publish Results'
+description: 'Publish Pytest Coverage and Cucumber Results'
+inputs:
+  access-token:
+    description: 'GitHub token'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Generate Coverage Reports
+      run: |
+        uv run coverage html
+        uv run coverage xml
+      shell: bash
+
+    - name: Coverage Report HTML
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage_html_report
+        path: coverage_html_report
+
+    - name: Coverage Report XML
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage_xml_report
+        path: coverage.xml
+
+    - name: Coverage Report
+      uses: 5monkeys/cobertura-action@v14
+      with:
+        path: coverage.xml
+        minimum_coverage: 70  # FYI this is for all files, not per file
+        fail_below_threshold: true
+
+    - uses: deblockt/cucumber-report-annotations-action@v1.7
+      with:
+        access-token: ${{ inputs.access-token }}
+        path: "cucumber.json"

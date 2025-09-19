@@ -1,0 +1,36 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+
+# Code Coverage Data
+.coverage
+coverage.xml
+coverage_html_report/
+
+# environment variables
+.env
+
+# files fetched by an invoke task
+.builds
+json/
+
+memtab.json
+memtab.md
+*.db
+
+
+snowflake.xlsx
+
+cucumber.json
+metrics_*.json
+
+# generated files
+.hypothesis/

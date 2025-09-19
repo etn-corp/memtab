@@ -1,0 +1,22 @@
+{
+    "yaml.schemas": {
+        "src/memtab/schemas/memtab_config_file_schema.json": "tests/*.yml"
+    },
+    "restructuredtext.linter.doc8.extraArgs": [
+        "--config",
+        "${workspaceFolder}/pyproject.toml"
+    ]
+    ,
+        "files.watcherExclude": {
+            "**/.mypy_cache/**": true,
+            "**/.pytest_cache/**": true,
+            "**/.ruff_cache/**": true,
+            "**/__pycache__/**": true,
+        },
+        "files.exclude": {
+            "**/.mypy_cache": true,
+            "**/.pytest_cache": true,
+            "**/.ruff_cache": true,
+            "**/__pycache__": true,
+        }
+}

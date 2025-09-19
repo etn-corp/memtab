@@ -1,0 +1,24 @@
+- type: input
+  value: memtab --help
+
+- value: |
+    "Usage: memtab [OPTIONS] [ELF] [CONFIG]"
+    ""
+    "The main command line entry point for calling the memory tabulator. If you want to call memtab"
+    "from a python app, you should import it directly, NOT via this cli method."
+    ""
+    "╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮"
+    "│ --elf                                   TEXT    The elf file to process [env var: MEMTAB_ELF] [default: zephyr.elf]                                                                                                                                  │"
+    "│ --config                                TEXT    The yml config file(s). Can be provided multiple times. [env var: MEMTAB_YML] [default: memtab.yml]                                                                                                  │"
+    "│ --json                                  TEXT    The JSON file to write out to [default: memtab.json]                                                                                                                                                 │"
+    "│ --report                                REPORT  Generate report(s) via a plugin. Can be provided multiple times. If you wish to provide a filename, use a : delimiter, like --report markdown:file.md.  If none is provided, it will use a default   │"
+    "│                                                 filename determined by the plugin itself.                                                                                                                                                            │"
+    "│                                                 [default: None]                                                                                                                                                                                      │"
+    "│ --check                 --no-check              Sanity check the data against size, objdump and readelf [default: no-check]                                                                                                                          │"
+    "│ --cache                 --no-cache              Use cached data [default: no-cache]                                                                                                                                                                  │"
+    "│ --clean                 --no-clean              Clean the cache [default: no-clean]                                                                                                                                                                  │"
+    "│ --version               --no-version            Show the version of memtab [default: no-version]                                                                                                                                                     │"
+    "│ --install-completion                            Install completion for the current shell.                                                                                                                                                            │"
+    "│ --show-completion                               Show completion for the current shell, to copy it or customize the installation.                                                                                                                     │"
+    "│ --help                                          Show this message and exit.                                                                                                                                                                          │"
+    "╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯"

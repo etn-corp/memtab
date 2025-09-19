@@ -1,0 +1,15 @@
+
+
+- type: input
+  value: memtab --install-completion
+- value: bash completion installed in ~/.bash_completions/memtab.sh
+- value: Completion will take effect once you restart the terminal
+- value: "# open a new terminal"
+
+- value: memtab --report
+  type: input
+  prompt: $
+- value: "# double tab to show autocompletions"
+
+- value: memtab --report markdown treemap excel
+- value: "# the above were listed by the autocompletion feature from typer"

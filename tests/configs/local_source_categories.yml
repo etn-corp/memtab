@@ -1,0 +1,13 @@
+Source Code:
+  root: "/"
+  categories:
+    - name: App
+      categories:
+        - name: directory_search
+          directories: ["not_a_directory"]
+        - name: file_search
+          files: ["not_a_file"]
+        - name: regex_search
+          regexes: ["not_a_regex"]
+        - name: Hello World
+          patterns: ["hello-world"]

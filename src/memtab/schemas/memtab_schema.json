@@ -1,0 +1,420 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "description": "The version of the schema.",
+            "const": "1.2.0"
+        },
+        "symbols": {
+            "$ref": "#/$defs/symbol_array",
+            "description": "An array of memory symbols."
+        },
+        "regions": {
+            "$ref": "#/$defs/region_array",
+            "description": "An object containing memory regions."
+        },
+        "elf_sections": {
+            "$ref": "#/$defs/elf_sections_array",
+            "description": "An object containing ELF sections."
+        },
+        "metadata": {
+            "$ref": "#/$defs/metadata",
+            "description": "Origin-defining metadata of the ELF file that the memory table corresponds to.  Things like repo, date, build ID, etc."
+        },
+        "project": {
+            "type": "string",
+            "description": "The project name.  This is used to correlate this build with a project.  A project CAN have multiple builds (repositories) associated with it."
+        },
+        "build": {
+            "$ref": "#/$defs/build",
+            "description": "The build information. Typically if running on GHA, it will be populated from there, otherwise its all unknowns. When from GHA, you can view this for supporting documentation: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables"
+        }
+    },
+    "required": [
+        "schema_version",
+        "symbols",
+        "regions",
+        "elf_sections",
+        "metadata",
+        "project"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+        "symbol_array": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/memory_symbol"
+            },
+            "description": "An array of memory symbols.",
+            "minItems": 1
+        },
+        "memory_symbol": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "description": "The symbol name."
+                },
+                "address": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "minimum": 0,
+                    "description": "The memory address of the symbol."
+                },
+                "size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The size of the symbol in bytes."
+                },
+                "memory_type": {
+                    "type": "string",
+                    "description": "The type of the symbol."
+                },
+                "file": {
+                    "type": "string",
+                    "description": "The file where the symbol is defined."
+                },
+                "commit": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$|^unknown$",
+                    "description": "The commit sha where the symbol is defined."
+                },
+                "repo": {
+                    "type": "string",
+                    "description": "The repository where the symbol is defined."
+                },
+                "line": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The line number in the file where the symbol is defined."
+                },
+                "categories": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[0-9]+$": {
+                            "type": "string",
+                            "description": "The category of the symbol."
+                        }
+                    },
+                    "description": "The category(categories) of the symbol."
+                },
+                "region": {
+                    "type": "string",
+                    "enum": [
+                        "RAM",
+                        "Code",
+                        "Flash",
+                        "unknown"
+                    ],
+                    "description": "The memory region of the symbol."
+                },
+                "subregion": {
+                    "type": "string",
+                    "description": "The subregion of the symbol."
+                },
+                "elf_section": {
+                    "type": "string",
+                    "description": "The elf section of the symbol."
+                },
+                "assigned_size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The assigned size of the symbol. If its greater than size, there is some unused memory above. If it is less than size, there is shared memory with another adjacent symbol."
+                }
+            },
+            "required": [
+                "symbol",
+                "size",
+                "memory_type",
+                "file",
+                "line",
+                "categories",
+                "region",
+                "subregion",
+                "elf_section",
+                "assigned_size",
+                "address"
+            ],
+            "additionalProperties": false,
+            "description": "A memory symbol object."
+        },
+        "dec_or_hex": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "pattern": "^(0x[0-9a-fA-F]+|[0-9]+)$"
+                },
+                {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            ]
+        },
+        "region_array": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/memory_region"
+            },
+            "description": "An array of memory regions.",
+            "minItems": 1
+        },
+        "memory_region": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the memory region. Correlates to the region names from the input config"
+                },
+                "start": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The start address of the memory region."
+                },
+                "end": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The end address of the memory region."
+                },
+                "size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The size of the memory region."
+                },
+                "region": {
+                    "type": "string",
+                    "enum": [
+                        "RAM",
+                        "Code",
+                        "Flash"
+                    ],
+                    "description": "The memory region type."
+                },
+                "flags": {
+                    "type": "string",
+                    "description": "The flags associated with the region, if any"
+                },
+                "region_type": {
+                    "type": "string",
+                    "enum": [
+                        "RAM",
+                        "Code",
+                        "Flash"
+                    ],
+                    "description": "The memory region type."
+                },
+                "spare": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "the amount of spare memory left in the region."
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "name",
+                        "start",
+                        "end",
+                        "region",
+                        "spare"
+                    ]
+                },
+                {
+                    "required": [
+                        "name",
+                        "start",
+                        "end",
+                        "region_type",
+                        "spare"
+                    ]
+                },
+                {
+                    "required": [
+                        "name",
+                        "start",
+                        "size",
+                        "region",
+                        "spare"
+                    ]
+                },
+                {
+                    "required": [
+                        "name",
+                        "start",
+                        "size",
+                        "region_type",
+                        "spare"
+                    ]
+                }
+            ],
+            "additionalProperties": false,
+            "description": "A memory region. Note these correlate to regions defined in the input config, NOT ELF regions."
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "description": "The filename of the ELF file that the memory table corresponds to.",
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z0-9\\-_./]*[a-zA-Z0-9\\-_]+\\.elf$",
+                            "description": "Unix/Linux path format for ELF files"
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^[A-Za-z]:[a-zA-Z0-9\\-_.\\\\]*[a-zA-Z0-9\\-_]+\\.elf$",
+                            "description": "Windows absolute path format for ELF files"
+                        }
+                    ]
+                },
+                "size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The size of the ELF file that the memory table corresponds to."
+                },
+                "md5": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{32}$",
+                    "description": "The md5 hash of the ELF file that the memory table corresponds to."
+                },
+                "memtab_version": {
+                    "type": "string",
+                    "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                    "description": "The version of the memtab python package that generated this file."
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The timestamp of the build that produced this memory table. If using GHA, this corresponds to \"created_at\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                },
+                "build": {
+                    "type": "object",
+                    "properties": {
+                        "commit": {
+                            "type": "string",
+                            "description": "The commit hash of the build that produced this memory table. If using GHA, this corresponds to \"head_sha\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        },
+                        "repo": {
+                            "type": "string",
+                            "description": "The repository name of the build that produced this memory table. If using GHA, this corresponds to \"repository.name\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        },
+                        "owner": {
+                            "type": "string",
+                            "description": "The owner of the repository that produced this memory table. If using GHA, this corresponds to \"repository.owner.login\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        },
+                        "id": {
+                            "type": "integer",
+                            "description": "The build ID of the build that produced this memory table. If using GHA, this corresponds to \"id\" https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the build that produced this memory table. If using GHA, this corresponds to \"name\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "The URL of the build that produced this memory table. If using GHA, this corresponds to \"html_url\" from https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run"
+                        }
+                    },
+                    "required": [
+                        "commit",
+                        "repo",
+                        "owner",
+                        "id"
+                    ],
+                    "additionalProperties": false
+                }
+            },
+            "required": [
+                "filename",
+                "timestamp",
+                "memtab_version"
+            ],
+            "additionalProperties": false
+        },
+        "build": {
+            "properties": {
+                "build_id": {
+                    "type": "integer"
+                },
+                "attempt_id": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "starts at 1 if run in GitHub, increments for each retry. If not run in GitHub Actions, this is 0."
+                },
+                "commit_sha": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$",
+                    "description": "The commit SHA of the build."
+                },
+                "repository_name": {
+                    "type": "string"
+                },
+                "branch": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "repository_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "elf_sections_array": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/elf_section"
+            },
+            "description": "An array of ELF sections. These is similar to the regions, but is an ELF standard definition, rather than a memtab definition.",
+            "minItems": 1
+        },
+        "elf_section": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the ELF section."
+                },
+                "address": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The address of the ELF section."
+                },
+                "size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The size of the ELF section."
+                },
+                "flags": {
+                    "type": "string",
+                    "description": "The flags of the ELF section."
+                },
+                "calculated_symbol_size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The calculated size of all the symbols in the ELF section."
+                },
+                "type": {
+                    "type": "string",
+                    "description": "The type of the ELF section.",
+                    "enum": ["PROGBITS", "NOBITS", "DYNAMIC", "FINI_ARRAY", "INIT_ARRAY", "REL", "VERNEED", "VERSYM", "GNU_HASH", "NOTE", "RELA"]
+                },
+                "unused": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The amount of unused space at the start of the ELF section. It can be zero if the first symbol is right at the start of the section."
+                }
+            },
+            "required": [
+                "name",
+                "address",
+                "size",
+                "type",
+                "flags",
+                "calculated_symbol_size",
+                "unused"
+            ],
+            "additionalProperties": false,
+            "description": "An ELF section object. This can be thought of as the sections listed in `readelf -SW`"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+---
+name: 'run precommit hooks'
+
+on:
+  pull_request:
+
+jobs:
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloning repo
+        uses: actions/checkout@v4
+
+      - name: Install Precommit
+        run: |
+            pip install pre-commit
+            pre-commit install
+
+      - name: Run Precommit Hooks
+        run: pre-commit run --all-files --verbose
+      - name: Show Diffs
+        if: failure()
+        run: git status && git diff

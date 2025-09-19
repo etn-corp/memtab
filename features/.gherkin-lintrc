@@ -1,0 +1,15 @@
+{
+    "no-empty-background": "on",
+    "no-empty-file": "on",
+    "no-dupe-feature-names": "on",
+    "no-homogenous-tags": "on",
+    "no-multiple-empty-lines": "on",
+    "no-trailing-spaces": "on",
+    "one-space-between-tags": "on",
+    "no-examples-in-scenarios":"on",
+    "no-unnamed-features": "on",
+    "no-unnamed-scenarios": "on",
+    "no-unused-variables": "on",
+    "new-line-at-eof": ["on", "yes"],
+    "file-name": ["on", {"style": "Title Case"}]
+}

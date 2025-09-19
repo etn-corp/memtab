@@ -1,0 +1,107 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: 'docs/features.*.rst'
+      - id: check-yaml
+      - id: debug-statements
+      - id: check-docstring-first
+      - id: check-toml
+      - id: no-commit-to-branch
+        args: [--branch, main]  # this is just a helper, as main is already protected in GitHub
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.5.23
+    hooks:
+      - id: uv-lock
+  - repo: https://github.com/econchick/interrogate
+    # we use interrogate to help enforce that we add docstrings to our methods.
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        pass_filenames: false  # uses settings from pyproject.toml, so no args needed
+  - repo: local
+    hooks:
+    - id: gherkin-lint
+      name: Gherkin Lint
+      description: Check whether your feature-files are consistingly following a given set of rules.
+      entry: gherkin-lint
+      additional_dependencies:
+        - gherkin-lint
+      language: node
+      files: ^features/.*.feature$
+      args: ["-c", "features/.gherkin-lintrc", "features/"]
+    - id: sphinx-build
+      name: Sphinx build
+      description: check if sphinx build works
+      entry: sphinx-build
+      language: python
+      args: ["docs", "docs/_build/html"]
+      pass_filenames: false
+      types_or: [python, gherkin, rst]
+      additional_dependencies:  # is there a way to get these from the pyproject.toml instead? that'd be nice...
+        - sphinx==7.1.2
+        - sphinx-gherkindoc
+        - sphinxcontrib-apidoc
+        - sphinx-autodoc-typehints
+        - sphinx-multiversion
+        - sphinx-term
+        - sphinxcontrib-mermaid
+        - sphinx-jsonschema
+        - sphinxcontrib-images
+        - sphinx-design
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+    - id: mypy
+      additional_dependencies:
+        - types-PyYAML
+        - types-jsonschema
+        - types-toml
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.31.2
+    hooks:
+    - id: check-jsonschema
+      args: ["--schemafile", "src/memtab/schemas/memtab_config_file_schema.json"]
+      files: "^tests/.*.yml$"
+  - repo: https://github.com/rstcheck/rstcheck
+    rev: v6.2.4
+    hooks:
+      - id: rstcheck
+        additional_dependencies: [sphinx]
+        args: ["--ignore-directives", "termynal,automodule,mermaid,jsonschema,thumbnail"]  # these SHOULD be able to come from pyproject.toml too...
+  - repo: https://github.com/PyCQA/doc8
+    rev: v1.1.2
+    hooks:
+      - id: doc8
+        args: ["--ignore-path", "docs/_build"]
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.30.3
+    hooks:
+      - id: typos
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+    - id: codespell
+      additional_dependencies:
+        - tomli
+  - repo: https://github.com/espressif/check-copyright/
+    rev: v1.1.1
+    hooks:
+      - id: check-copyright
+        args: ['--config', 'docs/copyright_config.yaml']
+  - repo: https://github.com/commit-check/commit-check
+    rev: v0.10.2
+    hooks:
+    -   id: check-commit-signoff

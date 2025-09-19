@@ -1,0 +1,210 @@
+[project]
+name = "memtab"
+version = "0.11.2"
+description = "ELF File Memory Tabulator"
+readme = "README.rst"
+requires-python = ">=3.9"
+dependencies = [
+    "appdirs==1.4.4",
+    "jsonschema>=4.23.0",
+    "pandas[excel]>=2.2",
+    "pyelftools>=0.32",
+    "pyyaml>=6.0.2",
+    "typer>=0.15.1",
+    "mdutils>=1.6.0",
+    "tabulate>=0.9.0",
+    "python-dotenv>=1.0.1",
+    "pluggy>=1.5.0",
+    "gitpython>=3.1.44",
+]
+classifiers = ["Private :: Do Not Upload"]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/etn-corp/memtab/issues"
+
+
+[dependency-groups]
+dev = [
+    { include-group = "docs" },
+    { include-group = "static" },
+    { include-group = "test" }
+]
+
+static = [
+    "pandas-stubs>=2.2.2.240807",
+    "toml>=0.10.2",
+    "types-colorama>=0.4.15.20250801",
+    "types-docutils>=0.22.0.20250822",
+    "types-jsonschema>=4.23.0.20241208",
+    "types-openpyxl>=3.1.5.20250822",
+    "types-pillow>=10.2.0.20240822",
+    "types-pygments>=2.19.0.20250809",
+    "types-python-dateutil>=2.9.0.20250822",
+    "types-pytz>=2025.2.0.20250809",
+    "types-pyyaml>=6.0.12.20241230",
+    "types-toml>=0.10.8.20240310",
+]
+
+test = [
+    "coverage>=7.6.1",
+    "hypothesis-jsonschema>=0.23.1",
+    "invoke>=2.2.0",
+    "mypy>=1.14.1",
+    "pandas>=2.0.3",
+    "pygithub>=2.5.0",
+    "pytest>=8.3.4",
+    "pytest-bdd>=7.3.0",
+    "python-dotenv>=1.0.1",
+    "setuptools>=75.3.2",
+]
+docs = [
+    "doc8>=1.1.2",
+    "esbonio>=0.16.5",
+    "invoke>=2.2.0",
+    "plotly>=6.1.2",
+    "rstcheck>=6.2.4",
+    "sphinx==7.1.2", # we need to lock to a pre-7.2.5 version b/c sphinx-term has not yet been updated to match a breaking change introduced on 7.2.5. https://github.com/sphinx-doc/sphinx/issues/11608. The change was https://github.com/sphinx-doc/sphinx/pull/11582
+    "sphinx-autodoc-typehints>=2.0.1",
+    "sphinx-design>=0.6.1",
+    "sphinx-gherkin>=0.1",
+    "sphinx-gherkindoc>=3.6.4",
+    "sphinx-jsonschema>=1.19.1",
+    "sphinx-multiversion>=0.2.4",
+    "sphinx-term>=0.1",
+    "sphinxcontrib-apidoc>=0.5.0",
+    "sphinxcontrib-images>=1.0.1",
+    "sphinxcontrib-mermaid>=1.0.0",
+]
+[project.scripts]
+memtab = "memtab.cli:app"
+memtabviz = "memtab.cli:vizapp"
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 180
+[tool.ruff.lint]
+select = ["E", "F", "I", "C"]
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+title = "memtab Coverage Report"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+log_cli = true
+log_cli_level = "INFO"
+filterwarnings = "ignore"
+markers = [ "long"]
+
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-semiprivate = false
+ignore-private = true
+ignore-property-decorators = true
+ignore-module = false
+ignore-nested-functions = true
+ignore-nested-classes = false
+ignore-setters = true
+ignore-overloaded-functions = false
+fail-under = 80
+exclude = ["tests", "docs"]
+# example regex
+ignore-regex = []
+ext = []
+# possible values: sphinx (default), google
+style = "sphinx"
+# possible values: 0 (minimal output), 1 (-v), 2 (-vv)
+verbose = 2
+quiet = false
+whitelist-regex = []
+color = true
+omit-covered-files = false
+
+
+# this depends on you having both tox installed (pip install tox)
+# AND all of these python binaries available on your system.
+# on linux, that can be done via adding the deadsnakes ppa
+# and then apt installing them (sudo apt install python3.8, etc.)
+# note you also need python3.x-distutils
+[tool.tox]
+# per tox documentation (https://tox.wiki/en/3.24.5/config.html) right now
+# they only support ini style configuration, so to get config added to this
+# pyproject.toml, we need to "inline" a legacy ini config as a multiline string.
+legacy_tox_ini = """
+[tox]
+envlist = py38, py39, py310, py311, py312, py313
+
+[testenv]
+skip_install = true
+allowlist_externals = uv
+commands_pre =
+    uv lock
+    uv install
+commands =
+    uv run coverage run -m pytest --cucumberjson=cucumber.json
+"""
+
+[tool.mypy]
+files = "."
+
+# Use strict defaults
+strict = true
+warn_unreachable = true
+warn_no_return = true
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.rstcheck]
+ignore_directives = [
+    "automodule",
+    "termynal",
+    "jsonschema"
+]
+
+[tool.codespell]
+count = true
+quiet-level = 3
+skip = ["*.ipynb"]
+
+
+[tool.typos.default.extend-words]
+RELA = "RELA"
+
+[tool.doc8]
+max-line-length = 300  # somewhat arbitrary, but seems to be a good compromise
+allow-long-titles = true
+
+[tool.poe.tasks]
+test = [
+    { cmd = "coverage run -m pytest tests --cucumberjson=cucumber.json" },
+    { cmd = "coverage html" },
+    { cmd = "coverage xml" }
+]
+lint = "pre-commit run --all-files"
+docs = "sphinx-multiversion docs docs/_build/html"
+simpledocs = "sphinx-build docs docs/_build/html"
+
+[tool.poe.tasks.serve]
+deps = ["simpledocs"]
+script = "http.server"
+cwd = "docs/_build/html"
