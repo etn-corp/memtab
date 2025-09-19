@@ -816,7 +816,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/b1/ec/6240f147530a2c8d3
 
 [[package]]
 name = "memtab"
-version = "0.11.2"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },

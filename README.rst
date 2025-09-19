@@ -24,6 +24,12 @@ To install ``memtab``, you can use ``pip``:
 
 .. code-block:: sh
 
+   pip install memtab
+
+You can also install it directly from git if desired:
+
+.. code-block:: sh
+
    pip install git+https://github.com/etn-corp/memtab.git
 
 Usage
@@ -110,16 +116,15 @@ To generate documentation, use ``Sphinx``:
 
 .. code-block:: sh
 
-   cd docs/
-   sphinx-apidoc -o . ../src/memtab/
+   sphinx-build docs docs/_build/html
 
-Now hand-edit the generated files to fix the paths (adding ``memtab.``), and then run:
+Or, if you have ``poe`` installed, you can run:
 
 .. code-block:: sh
 
-   invoke docs
+   poe docs
 
 License
 -------
 
-This project is proprietary and not licensed for public use.
+This project is licensed under the MIT License. See the `LICENSE file <https://github.com/etn-corp/memtab/blob/main/LICENSE>`_ for more information.
