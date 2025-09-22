@@ -1,6 +1,6 @@
 [project]
 name = "memtab"
-version = "0.11.2"
+version = "1.0.0"
 description = "ELF File Memory Tabulator"
 readme = "README.rst"
 requires-python = ">=3.9"
@@ -17,7 +17,14 @@ dependencies = [
     "pluggy>=1.5.0",
     "gitpython>=3.1.44",
 ]
-classifiers = ["Private :: Do Not Upload"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Software Development :: Build Tools",
+    "Environment :: Console"
+    ]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/etn-corp/memtab/issues"
