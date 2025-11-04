@@ -24,7 +24,7 @@ jobs:
         run: uv sync --all-extras --dev
       - name: Install Invoke
         run: |
-          pip install invoke
+          pip install invoke toml
 
       - name: Extract version from pyproject.toml
         id: get_version
