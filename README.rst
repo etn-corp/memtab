@@ -58,6 +58,21 @@ To use the Python library:
 
    print(report)  # this is a pandas dataframe at this point
 
+GitHub Action
+~~~~~~~~~~~~~~
+
+To use this as a GitHub Action:
+
+.. code-block:: yaml
+
+  - name: Memtab
+    uses: etn-corp/memtab@main
+    with:
+        sdk_path: [YOUR_SDK_HERE]
+        elf: ${{ github.workspace }}\source\build\zephyr\zephyr.elf
+
+The action will generate the markdown output (using the `--md` argument) and upload that markdown as a step summary.
+
 Developing
 ----------
 
