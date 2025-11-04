@@ -1,0 +1,113 @@
+name: memtab
+description: "Composite action to generate and publish memory usage table/report"
+
+inputs:
+  elf:
+    required: false
+    description: The ELF file to tabulate
+  config:
+    required: false
+    description: the YAML file to configure tabulation (categories and subcategories)
+  sdk_path:
+    required: false
+    description: Where on your System the SDK / toolchain resides
+  running_in_container:
+    required: false
+    default: 'false'
+    description: flag when running memtab in container
+  source_directory:
+    required: false
+    description: The source directory relative to the workspace where memtab should run
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+    - name: Install Orca (The image generation tool used by memtab)
+      if: runner.os == 'Windows'
+      run: |
+        npm install -g electron@6.1.4 orca
+      shell: pwsh
+
+    - name: Tabulate Memory (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        if ("${{ inputs.sdk_path }}" -ne '') {
+          $env:PATH += ";${{ inputs.sdk_path }}"
+        }
+        uv run memtab --report markdown:memtab.md
+      working-directory: ${{ github.workspace }}\${{ inputs.source_directory }}
+      shell: pwsh
+      env:
+        MEMTAB_ELF: ${{ inputs.elf }}
+        MEMTAB_YML: ${{ inputs.config }}
+
+    - name: Tabulate Memory (Linux)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
+      run: |
+        if [[ -n "${{ inputs.sdk_path }}" ]]; then
+          export PATH=$PATH:${{ inputs.sdk_path }}
+        fi
+        uv run memtab --report markdown:memtab.md
+      working-directory: ${{ github.workspace }}/${{ inputs.source_directory }}
+      shell: bash
+      env:
+        MEMTAB_ELF: ${{ inputs.elf }}
+        MEMTAB_YML: ${{ inputs.config }}
+
+    - name: Tabulate Memory (Container)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
+      run: |
+        if [[ -n "${{ inputs.sdk_path }}" ]]; then
+          export PATH=$PATH:${{ inputs.sdk_path }}
+        fi
+        uv run memtab --report markdown:memtab.md
+      working-directory: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}
+      shell: bash
+      env:
+        MEMTAB_ELF: ${{ inputs.elf }}
+        MEMTAB_YML: ${{ inputs.config }}
+
+    - name: Publish Memory Tabulator Results (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Memory Tabulator Results
+        path: ${{ github.workspace }}\${{ inputs.source_directory }}\memtab.json
+
+    - name: Publish Memory Tabulator Results (Linux)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Memory Tabulator Results
+        path: ${{ github.workspace }}/${{ inputs.source_directory }}/memtab.json
+
+    - name: Publish Memory Tabulator Results (Container)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Memory Tabulator Results
+        path: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}/memtab.json
+
+    - name: Publish Memory Summary (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $summary_content = Get-Content -Raw -Path memtab.md
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary_content
+      working-directory: ${{ github.workspace }}\${{ inputs.source_directory }}
+      shell: pwsh
+
+    - name: Publish Memory Summary (Linux)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
+      run: |
+        cat memtab.md >> $GITHUB_STEP_SUMMARY
+      working-directory: ${{ github.workspace }}/${{ inputs.source_directory }}
+      shell: bash
+
+    - name: Publish Memory Summary (Container)
+      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
+      run: |
+        cat memtab.md >> $GITHUB_STEP_SUMMARY
+      working-directory: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}
+      shell: bash

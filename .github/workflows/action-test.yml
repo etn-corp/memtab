@@ -1,5 +1,7 @@
 ---
-name: 'pytest'
+name: 'GHA Verification Tests'
+permissions:
+  contents: read
 
 on:
     pull_request:
@@ -39,36 +41,20 @@ jobs:
           wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-win32.zip
           7z x gcc-arm-none-eabi-10.3-2021.10-win32.zip
 
-      - name: Install the Xtensa Crosscompiler Toolchain (Linux)
+      - name: Update PATH with toolchain binaries (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          wget https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/xtensa-esp-elf-14.2.0_20241119-x86_64-linux-gnu.tar.xz
-          tar xf xtensa-esp-elf-14.2.0_20241119-x86_64-linux-gnu.tar.xz
+          echo "$PWD/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
 
-      - name: Install the Xtensa Crosscompiler Toolchain (Windows)
+      - name: Update PATH with toolchain binaries (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          choco install wget
-          wget https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/xtensa-esp-elf-14.2.0_20241119-x86_64-w64-mingw32.zip
-          7z x xtensa-esp-elf-14.2.0_20241119-x86_64-w64-mingw32.zip
+          echo "$env:PWD\gcc-arm-none-eabi-10.3-2021.10\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Run tests (Linux)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          export PATH=$PWD/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin:$PATH
-          export PATH=$PWD/xtensa-esp-elf/bin:$PATH
-          uv run coverage run -m pytest tests --cucumberjson=cucumber.json
-        shell: bash
-
-      - name: Run tests (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          $env:PATH += ";$PWD\gcc-arm-none-eabi-10.3-2021.10\bin"
-          $env:PATH += ";$PWD\xtensa-esp-elf\bin"
-          uv run coverage run -m pytest tests --cucumberjson=cucumber.json -k "not local_source"  # we ignore local_source tests in windows because the x86 binary readelf command is not identical
-      - name: Publish Results
-        uses: ./.github/actions/publish_test_results
+      - name: Run GHA
+        uses: ./
         if: ${{ !cancelled() && matrix.os == 'ubuntu-latest'  && matrix.python-version == '3.13' }} # provide coverage data even if tests failed
         with:
-          access-token: ${{ secrets.GITHUB_TOKEN }}
+          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config: ${{ github.workspace }}/tests/configs/blinky.yml
 ...
