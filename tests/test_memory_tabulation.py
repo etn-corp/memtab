@@ -125,6 +125,8 @@ def _add_special_arguments(arguments: str, elf_file: str, out_name: str, root_di
                 os.remove(report_file)
             args.extend(["--report", "markdown"])
             output_files.append(report_file)
+        elif argument == "project":
+            args.extend(["--project", "Blinky"])
         else:
             raise ValueError(f"Unknown argument: {argument}")
 
@@ -314,6 +316,7 @@ def given_configuration_files(configuration: str) -> Generator[List[Optional[str
             "blinky": "blinky.yml",
             "blinky_include": "blinky_include.yml",
             "blinky_with_elf": "blinky_with_elf.yml",
+            "blinky_no_project": "blinky_no_project.yml",
             "cpp": "cpp.yml",
         }
         config_file = os.path.join(root_dir, "configs", config_lookup[word]) if word else None
@@ -346,6 +349,10 @@ def given_environment_variables(environment: str) -> Generator[Dict[str, str], N
     elif "Memtab Env" in environment:
         my_env["MEMTAB_ELF"] = os.path.join(root_dir, "hello-world.elf")
         my_env["MEMTAB_YML"] = os.path.join(root_dir, "hello-world.yml")
+    elif "Memtab Proj Env" in environment:
+        my_env["MEMTAB_ELF"] = os.path.join(root_dir, "blinky.elf")
+        my_env["MEMTAB_YML"] = os.path.join(root_dir, "blinky_no_project.yml")
+        my_env["MEMTAB_PROJECT"] = "Blinky"
     elif "Defaults" in environment:
         # this is a bit odd, but we just put a special variable in the env as a "flag" to downstream tests
         # to indicate that we should run in a different folder, so we don't mess up other tests that rely on

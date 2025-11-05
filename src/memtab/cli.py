@@ -210,7 +210,7 @@ def memtab(
         ),
     ] = None,
     version: Annotated[Optional[bool], typer.Option(help="Show the version of memtab", callback=version_callback, is_eager=True)] = None,
-    project: Annotated[Optional[str], typer.Option(help="The project name")] = None,
+    project: Annotated[Optional[str], typer.Option(help="The project name", envvar="MEMTAB_PROJECT")] = None,
 ) -> None:
     """The main command line entry point for calling the memory tabulator.
     If you want to call memtab from a python app, you should import it

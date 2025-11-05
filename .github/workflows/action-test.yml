@@ -46,15 +46,39 @@ jobs:
         run: |
           echo "$PWD/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
 
-      - name: Update PATH with toolchain binaries (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          echo "$env:PWD\gcc-arm-none-eabi-10.3-2021.10\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Run GHA
+      - name: Run GHA (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: ./
-        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest'  && matrix.python-version == '3.13' }} # provide coverage data even if tests failed
         with:
           elf: ${{ github.workspace }}/tests/inputs/blinky.elf
           config: ${{ github.workspace }}/tests/configs/blinky.yml
+          artifact_name: Memtab Results for ${{ matrix.os }} Python ${{ matrix.python-version }}
+
+      - name: Run GHA (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: ./
+        with:
+          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config: ${{ github.workspace }}/tests/configs/blinky.yml
+          sdk_path: ${{ github.workspace }}/gcc-arm-none-eabi-10.3-2021.10/bin
+          artifact_name: Memtab Results for ${{ matrix.os }} Python ${{ matrix.python-version }}
+
+      - name: Run GHA with project argument (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: ./
+        with:
+          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
+          project: Blinky
+          artifact_name: Memtab Results with Project for ${{ matrix.os }} Python ${{ matrix.python-version }}
+
+      - name: Run GHA with project argument (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: ./
+        with:
+          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
+          project: Blinky
+          sdk_path: ${{ github.workspace }}/gcc-arm-none-eabi-10.3-2021.10/bin
+          artifact_name: Memtab Results with Project for ${{ matrix.os }} Python ${{ matrix.python-version }}
 ...
