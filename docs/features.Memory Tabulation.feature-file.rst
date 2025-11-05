@@ -57,6 +57,8 @@
     ““, ““, “Memtab Env“, “check“, “JSON“
     ““, ““, “Defaults“, “check“, “JSON“
     ““, “blinky_with_elf“, ““, “check“, “JSON“
+    “blinky“, “blinky_no_project“, ““, “project“, “JSON“
+    ““, ““, “Memtab Proj Env“, “check“, “JSON“
 
 :gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Supplementing the ELF file with a Map File`
 ------------------------------------------------------------------------------------------------------------

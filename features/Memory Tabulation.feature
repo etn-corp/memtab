@@ -34,6 +34,9 @@ Feature: Memory Tabulation of an ELF file
         |               |                  | Defaults       |  check       | JSON               |
         # this next row is a test of the ELF file specified in the YAML config file
         |               |  blinky_with_elf |                |  check       | JSON               |
+        # test of the project argument overriding the YAML config file
+        | blinky        | blinky_no_project|                |  project     | JSON               |
+        |               |                  | Memtab Proj Env|  check       | JSON               |
 
    Scenario: Supplementing the ELF file with a Map File
     Given an ELF file
