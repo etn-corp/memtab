@@ -18,6 +18,13 @@ inputs:
   source_directory:
     required: false
     description: The source directory relative to the workspace where memtab should run
+  project:
+    required: false
+    description: The memtab project name to use (overrides the memtab.yml setting, if present)
+  artifact_name:
+    required: false
+    description: The name to use when publishing the memtab results as an artifact
+    default: Memory Tabulator Results
 
 runs:
   using: composite
@@ -64,6 +71,9 @@ runs:
         if ("${{ inputs.sdk_path }}" -ne '') {
           $env:PATH += ";${{ inputs.sdk_path }}"
         }
+        if ("${{ inputs.project }}" -ne '') {
+          $env:MEMTAB_PROJECT = "${{ inputs.project }}"
+        }
         uv run --project ${{ env.ACTION_PATH }} memtab --report markdown:memtab.md
       working-directory: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}
       shell: pwsh
@@ -77,6 +87,9 @@ runs:
         if [[ -n "${{ inputs.sdk_path }}" ]]; then
           export PATH=$PATH:${{ inputs.sdk_path }}
         fi
+        if [[ -n "${{ inputs.project }}" ]]; then
+          export MEMTAB_PROJECT="${{ inputs.project }}"
+        fi
         uv run --project ${{ env.ACTION_PATH }} memtab --report markdown:memtab.md
       working-directory: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}
       shell: bash
@@ -88,14 +101,14 @@ runs:
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
-        name: Memory Tabulator Results
+        name: ${{ inputs.artifact_name }}
         path: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}\memtab.json
 
     - name: Publish Memory Tabulator Results (Linux)
       if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
-        name: Memory Tabulator Results
+        name: ${{ inputs.artifact_name }}
         path: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}/memtab.json
 
     - name: Publish Memory Summary (Windows)
