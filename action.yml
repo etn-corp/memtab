@@ -22,8 +22,36 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Set environment variables for non-container
+      if: inputs.running_in_container == 'false'
+      run: |
+        echo "WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
+        echo "ACTION_PATH=${{ github.action_path }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set environment variables for container
+      if: inputs.running_in_container == 'true'
+      run: |
+        echo "WORKSPACE=${{ env.WORKSPACE }}" >> $GITHUB_ENV
+        if [ -n "${{ env.ACTION_PATH }}" ]; then
+          echo "ACTION_PATH=${{ env.ACTION_PATH }}" >> $GITHUB_ENV
+        elif [ -n "$GITHUB_ACTION_PATH" ]; then
+          echo "ACTION_PATH=$GITHUB_ACTION_PATH" >> $GITHUB_ENV
+        else
+          # Final fallback
+          ACTION_REF="${{ github.action_ref }}"
+          if [ -z "$ACTION_REF" ]; then
+            ACTION_REF="main"
+          fi
+          echo "ACTION_PATH=/__w/_actions/etn-corp/memtab/$ACTION_REF" >> $GITHUB_ENV
+        fi
+      shell: bash
+
     - name: Install uv
       uses: astral-sh/setup-uv@v7
+      with:
+        working-directory: ${{ env.ACTION_PATH }}
+
     - name: Install Orca (The image generation tool used by memtab)
       if: runner.os == 'Windows'
       run: |
@@ -36,33 +64,20 @@ runs:
         if ("${{ inputs.sdk_path }}" -ne '') {
           $env:PATH += ";${{ inputs.sdk_path }}"
         }
-        uv run memtab --report markdown:memtab.md
-      working-directory: ${{ github.workspace }}\${{ inputs.source_directory }}
+        uv run --project ${{ env.ACTION_PATH }} memtab --report markdown:memtab.md
+      working-directory: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}
       shell: pwsh
       env:
         MEMTAB_ELF: ${{ inputs.elf }}
         MEMTAB_YML: ${{ inputs.config }}
 
     - name: Tabulate Memory (Linux)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
+      if: runner.os == 'Linux'
       run: |
         if [[ -n "${{ inputs.sdk_path }}" ]]; then
           export PATH=$PATH:${{ inputs.sdk_path }}
         fi
-        uv run memtab --report markdown:memtab.md
-      working-directory: ${{ github.workspace }}/${{ inputs.source_directory }}
-      shell: bash
-      env:
-        MEMTAB_ELF: ${{ inputs.elf }}
-        MEMTAB_YML: ${{ inputs.config }}
-
-    - name: Tabulate Memory (Container)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
-      run: |
-        if [[ -n "${{ inputs.sdk_path }}" ]]; then
-          export PATH=$PATH:${{ inputs.sdk_path }}
-        fi
-        uv run memtab --report markdown:memtab.md
+        uv run --project ${{ env.ACTION_PATH }} memtab --report markdown:memtab.md
       working-directory: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}
       shell: bash
       env:
@@ -74,17 +89,10 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: Memory Tabulator Results
-        path: ${{ github.workspace }}\${{ inputs.source_directory }}\memtab.json
+        path: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}\memtab.json
 
     - name: Publish Memory Tabulator Results (Linux)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
-      uses: actions/upload-artifact@v4
-      with:
-        name: Memory Tabulator Results
-        path: ${{ github.workspace }}/${{ inputs.source_directory }}/memtab.json
-
-    - name: Publish Memory Tabulator Results (Container)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
+      if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
         name: Memory Tabulator Results
@@ -95,18 +103,11 @@ runs:
       run: |
         $summary_content = Get-Content -Raw -Path memtab.md
         Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary_content
-      working-directory: ${{ github.workspace }}\${{ inputs.source_directory }}
+      working-directory: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}
       shell: pwsh
 
     - name: Publish Memory Summary (Linux)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'false'
-      run: |
-        cat memtab.md >> $GITHUB_STEP_SUMMARY
-      working-directory: ${{ github.workspace }}/${{ inputs.source_directory }}
-      shell: bash
-
-    - name: Publish Memory Summary (Container)
-      if: runner.os == 'Linux' && inputs.running_in_container == 'true'
+      if: runner.os == 'Linux'
       run: |
         cat memtab.md >> $GITHUB_STEP_SUMMARY
       working-directory: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}
