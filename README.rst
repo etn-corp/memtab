@@ -43,7 +43,15 @@ To use the CLI, run:
 
 .. code-block:: sh
 
+   memtab --elf <path-to-elf-file>
+
+or, if you already have a configuration file, you can add that argument:
+
+.. code-block:: sh
+
    memtab --elf <path-to-elf-file> --config <path-to-yml-file>
+
+For more information on writing a config file, please refer to :ref:`configuration section <usage:Configuration>` of the usage documentation.
 
 Python Library
 ~~~~~~~~~~~~~~

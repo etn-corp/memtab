@@ -142,7 +142,7 @@ As alluded to in the above terminal window, this project is using `typer's autoc
    2. It increases the complexity of the typer command setup in cli.py.  Right now, all of the arguments can be more-or-less "static" parameters to the method.  This approach would require that the parameter list for the command itself by dynamic, and determined by the available plugins.  It is likely do-able, but more complex than what we have today.
 
 Configuration
------------------
+-------------
 The configuration file is a YAML file that contains the configuration for the memory tabulator. It is used to specify the input data, the output data, and the options for the memory tabulator.
 The schema for the configuration file is bundled with the project, and can be found in the `src/memtab/schemas/memtab-config-schema.json` file.
 The schema is used to validate the configuration file, and to provide autocompletion for the configuration file. If you are using an IDE like VSCode, consider using this schema to validate the file while you are editing it for faster feedback.
@@ -157,6 +157,38 @@ The sections of the configuration:
 #. Source Code
       #. Categories
 
+An example minimal configuration file might look something like this:
+
+.. code-block:: yaml
+
+   cpu:
+     gcc-prefix: arm-none-eabi-
+     name: cortex-m4
+     memory-regions:
+       - name: RAM
+         start: 0x20000000
+         size: 0x20000
+
+   Source Code:
+      root: "/"
+      categories:
+         - name: Zephyr
+            categories:
+               - name: Sdk
+                  patterns: ["zephyr-sdk", "zsdk"]
+               - name: Drivers
+                  patterns: ["zephyr/drivers"]
+               - name: Lib
+                  patterns: ["cpp/"] # important to include the trailing slash to not match on the .cpp extension
+               - name: OS
+                  patterns: ["sched.c", "mutex.c"]
+
+
+.. tip:: Developing your Configuration
+
+   When developing your configuration file, it is often useful to start small, and iterate often. Start with NO categories, where everything gets categorized as "unknown".
+   Then look at your `memtab.json` for common patterns in file names or paths, or symbol names, and create categories for those.  Then re-run the tool, and see how much of the memory gets categorized.
+   Make sure you leverage the `--cache` option to speed up your iterations.  Repeat this process until you have a satisfactory categorization of your memory usage.
 
 Multiple Configuration Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
