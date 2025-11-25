@@ -161,27 +161,26 @@ An example minimal configuration file might look something like this:
 
 .. code-block:: yaml
 
-   cpu:
-     gcc-prefix: arm-none-eabi-
+   Project: "My Zephyr Project"
+   CPU:
+     gcc_prefix: arm-none-eabi-
      name: cortex-m4
-     memory-regions:
-       - name: RAM
-         start: 0x20000000
-         size: 0x20000
-
+     memory regions:
+       - Flash:
+           - name: FLASH
+             start: "0x08000000"
+             size: "0x10000"
+       - RAM:
+           - name: RAM
+             start: "0x20000000"
+             size: "0x8000"
    Source Code:
       root: "/"
       categories:
-         - name: Zephyr
-            categories:
-               - name: Sdk
-                  patterns: ["zephyr-sdk", "zsdk"]
-               - name: Drivers
-                  patterns: ["zephyr/drivers"]
-               - name: Lib
-                  patterns: ["cpp/"] # important to include the trailing slash to not match on the .cpp extension
-               - name: OS
-                  patterns: ["sched.c", "mutex.c"]
+        - name: All
+          categories:
+            - name: All
+              regexes: [".*"]
 
 
 .. tip:: Developing your Configuration
