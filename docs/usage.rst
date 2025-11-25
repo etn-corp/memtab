@@ -204,26 +204,26 @@ An example minimal configuration file might look something like this:
 
 .. code-block:: yaml
 
-    Project: "My Zephyr Project"
-    CPU:
-         gcc_prefix: arm-none-eabi-
-         name: cortex-m4
-         memory regions:
-             - Flash:
-                   - name: FLASH
-                      start: "0x08000000"
-                      size: "0x10000"
-             - RAM:
-                   - name: RAM
-                      start: "0x20000000"
-                      size: "0x8000"
-    Source Code:
-         root: "/"
-         categories:
+   Project: "My Zephyr Project"
+   CPU:
+     gcc_prefix: arm-none-eabi-
+     name: cortex-m4
+     memory regions:
+       - Flash:
+           - name: FLASH
+             start: "0x08000000"
+             size: "0x10000"
+       - RAM:
+           - name: RAM
+             start: "0x20000000"
+             size: "0x8000"
+   Source Code:
+      root: "/"
+      categories:
+        - name: All
+          categories:
             - name: All
-               categories:
-                  - name: All
-                     regexes: [".*"]
+              regexes: [".*"]
 
 
 .. tip:: Developing your Configuration
