@@ -182,7 +182,7 @@ Example usage:
 
 
 Configuration
------------------
+-------------
 The configuration file is a YAML file that contains the configuration for the memory tabulator. It is used to specify the input data, the output data, and the options for the memory tabulator.
 The schema for the configuration file is bundled with the project, and can be found in the `src/memtab/schemas/memtab-config-schema.json` file.
 The schema is used to validate the configuration file, and to provide autocompletion for the configuration file. If you are using an IDE like VSCode, consider using this schema to validate the file while you are editing it for faster feedback.
@@ -199,6 +199,38 @@ The sections of the configuration:
     #. allow_zero_address_sections (optional, default: false)
 #. Source Code
       #. Categories
+
+An example minimal configuration file might look something like this:
+
+.. code-block:: yaml
+
+    Project: "My Zephyr Project"
+    CPU:
+         gcc_prefix: arm-none-eabi-
+         name: cortex-m4
+         memory regions:
+             - Flash:
+                   - name: FLASH
+                      start: "0x08000000"
+                      size: "0x10000"
+             - RAM:
+                   - name: RAM
+                      start: "0x20000000"
+                      size: "0x8000"
+    Source Code:
+         root: "/"
+         categories:
+            - name: All
+               categories:
+                  - name: All
+                     regexes: [".*"]
+
+
+.. tip:: Developing your Configuration
+
+    When developing your configuration file, it is often useful to start small, and iterate often. Start with NO categories, where everything gets categorized as "unknown".
+    Then look at your `memtab.json` for common patterns in file names or paths, or symbol names, and create categories for those.  Then re-run the tool, and see how much of the memory gets categorized.
+    Make sure you leverage the `--cache` option to speed up your iterations.  Repeat this process until you have a satisfactory categorization of your memory usage.
 
 CPU Section Filtering Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -232,7 +264,6 @@ Example:
             - name: FLASH
               start: "0x0"
               size: "0x100000"
-
 
 Multiple Configuration Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
