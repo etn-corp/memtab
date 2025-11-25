@@ -70,7 +70,7 @@ To use this as a GitHub Action:
     uses: etn-corp/memtab@main
     with:
         sdk_path: [YOUR_SDK_HERE]
-        elf: ${{ github.workspace }}\source\build\zephyr\zephyr.elf
+        elf_file: ${{ github.workspace }}\source\build\zephyr\zephyr.elf
 
 The action will generate the markdown output (using the `--md` argument) and upload that markdown as a step summary.
 

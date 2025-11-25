@@ -50,16 +50,16 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: ./
         with:
-          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
-          config: ${{ github.workspace }}/tests/configs/blinky.yml
+          elf_file: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config_file: ${{ github.workspace }}/tests/configs/blinky.yml
           artifact_name: Memtab Results for ${{ matrix.os }} Python ${{ matrix.python-version }}
 
       - name: Run GHA (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         uses: ./
         with:
-          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
-          config: ${{ github.workspace }}/tests/configs/blinky.yml
+          elf_file: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config_file: ${{ github.workspace }}/tests/configs/blinky.yml
           sdk_path: ${{ github.workspace }}/gcc-arm-none-eabi-10.3-2021.10/bin
           artifact_name: Memtab Results for ${{ matrix.os }} Python ${{ matrix.python-version }}
 
@@ -67,8 +67,8 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: ./
         with:
-          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
-          config: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
+          elf_file: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config_file: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
           project: Blinky
           artifact_name: Memtab Results with Project for ${{ matrix.os }} Python ${{ matrix.python-version }}
 
@@ -76,8 +76,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         uses: ./
         with:
-          elf: ${{ github.workspace }}/tests/inputs/blinky.elf
-          config: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
+          elf_file: ${{ github.workspace }}/tests/inputs/blinky.elf
+          config_file: ${{ github.workspace }}/tests/configs/blinky_no_project.yml
           project: Blinky
           sdk_path: ${{ github.workspace }}/gcc-arm-none-eabi-10.3-2021.10/bin
           artifact_name: Memtab Results with Project for ${{ matrix.os }} Python ${{ matrix.python-version }}

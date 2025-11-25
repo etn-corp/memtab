@@ -2,10 +2,10 @@ name: memtab
 description: "Composite action to generate and publish memory usage table/report"
 
 inputs:
-  elf:
+  elf_file:
     required: false
     description: The ELF file to tabulate
-  config:
+  config_file:
     required: false
     description: the YAML file to configure tabulation (categories and subcategories)
   sdk_path:
@@ -78,8 +78,8 @@ runs:
       working-directory: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}
       shell: pwsh
       env:
-        MEMTAB_ELF: ${{ inputs.elf }}
-        MEMTAB_YML: ${{ inputs.config }}
+        MEMTAB_ELF: ${{ inputs.elf_file }}
+        MEMTAB_YML: ${{ inputs.config_file }}
 
     - name: Tabulate Memory (Linux)
       if: runner.os == 'Linux'
