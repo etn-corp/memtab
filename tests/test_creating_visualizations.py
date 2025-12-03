@@ -43,6 +43,16 @@ def test_generating_visuals_from_memtab_output() -> None:
     """Generating Visuals from Memtab Output."""
 
 
+@scenario("Listing Available Report Formats from memtabviz")
+def test_listing_available_report_formats_from_memtabviz() -> None:
+    """Listing Available Report Formats from memtabviz."""
+
+
+@scenario("Listing Available Report Formats from memtab")
+def test_listing_available_report_formats_from_memtab() -> None:
+    """Listing Available Report Formats from memtab."""
+
+
 ################################
 # BDD Given Statements
 ################################
@@ -88,6 +98,20 @@ def _(input: str, capsys: CaptureFixture) -> Generator[Result, None, None]:
         yield CliRunner().invoke(vizapp, ["--input", input, "--report", "markdown"], catch_exceptions=False, color=True)
 
 
+@when("I run the memtab visualizer tool with the list-reports flag", target_fixture="result")
+def _viz_list_reports() -> Result:
+    """I run the memtab visualizer tool with the list-reports flag."""
+    return CliRunner().invoke(vizapp, ["--list-reports"], catch_exceptions=False)
+
+
+@when("I run the memtab tool with the list-reports flag", target_fixture="result")
+def _memtab_list_reports() -> Result:
+    """I run the memtab tool with the list-reports flag."""
+    from memtab.cli import app
+
+    return CliRunner().invoke(app, ["--list-reports"], catch_exceptions=False)
+
+
 ################################
 # BDD Then Statements
 ################################
@@ -95,3 +119,11 @@ def _(input: str, capsys: CaptureFixture) -> Generator[Result, None, None]:
 def _(result: Result) -> None:
     """I should see a visualization generated from the memtab output."""
     assert result.exit_code == 0
+
+
+@then("I should see a list of available report formats")
+def _list_formats(result: Result) -> None:
+    """I should see a list of available report formats."""
+    assert result.exit_code == 0
+    assert "Available report formats:" in result.output
+    assert "markdown" in result.output

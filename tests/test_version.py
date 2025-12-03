@@ -12,7 +12,7 @@ from pytest_bdd import given, scenario, then, when
 from typer import Typer
 from typer.testing import CliRunner
 
-from memtab.cli import app
+from memtab.cli import app, vizapp
 
 ####################
 # boilerplate to shorten the scenario names
@@ -36,6 +36,11 @@ def test_version_reporting() -> None:
     """Version Reporting."""
 
 
+@scenario("Version Reporting for memtabviz")
+def test_version_reporting_for_memtabviz() -> None:
+    """Version Reporting for memtabviz."""
+
+
 ################################
 # BDD Given Statements
 ################################
@@ -55,6 +60,15 @@ def _(memtab: Typer, capsys: CaptureFixture) -> Generator[str, None, None]:
     runner = CliRunner()
     with capsys.disabled():  # this is needed so stdout/logging can be captured by the runner, instead of pytest.
         request = runner.invoke(memtab, ["--version"])
+        yield request.stdout
+
+
+@when("I run the memtabviz version command", target_fixture="version")
+def _viz_version(capsys: CaptureFixture) -> Generator[str, None, None]:
+    """I run the memtabviz version command."""
+    runner = CliRunner()
+    with capsys.disabled():
+        request = runner.invoke(vizapp, ["--version"])
         yield request.stdout
 
 

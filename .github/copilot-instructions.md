@@ -6,6 +6,8 @@ We practice Behavior Driven Development (BDD) and use pytest for testing. This m
 
 Extra documentation, beyond the docstrings and comments in code, can be found in rst files in the docs directory.
 
+We use typer for command line interfaces.
+
 We use sphinx for documentation generation.
 
 We use mypy for type checking.
@@ -31,3 +33,7 @@ As part of using `uv`, that tends to be the way we run the code, e.g. `uv run sr
 The exception to the above is when running `pre-commit`, which manages its _own_ virtual environment.  So in the case of pre-commit things (like `mypy`, `ruff`, etc.), we should run `pre-commit run mypy` etc., not just `mypy`, to ensure that the pre-commit hooks are run, using pre-commits environment.
 
 Basically, between `uv` and `pre-commit`, if you are running a command that depends on python, it should be through those tools, not the native python environment.
+
+We follow [semantic versioning](https://semver.org/) for versioning.
+
+For logging, we use the standard library `logging` module, and follow its best practices, unless coming from the command line functions, in which case we use `typer`'s built-in logging support like `echo`.

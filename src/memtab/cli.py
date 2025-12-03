@@ -152,7 +152,17 @@ def __gen_reports(reports: Optional[List[ReportType]], tabulator: Memtab) -> Non
 def version_callback(value: bool) -> None:
     """Callback to show the version of memtab"""
     if value:
-        print(vers("memtab"))
+        typer.echo(vers("memtab"))
+        raise typer.Exit()
+
+
+def list_reports_callback(value: bool) -> None:
+    """Callback to list available report formats"""
+    if value:
+        typer.echo("Available report formats:")
+        formats = __find_report_formats()
+        for fmt in formats:
+            typer.echo(f"  {fmt}")
         raise typer.Exit()
 
 
@@ -210,6 +220,7 @@ def memtab(
         ),
     ] = None,
     version: Annotated[Optional[bool], typer.Option(help="Show the version of memtab", callback=version_callback, is_eager=True)] = None,
+    list_reports: Annotated[Optional[bool], typer.Option(help="List available report formats", callback=list_reports_callback, is_eager=True)] = None,
     project: Annotated[Optional[str], typer.Option(help="The project name", envvar="MEMTAB_PROJECT")] = None,
 ) -> None:
     """The main command line entry point for calling the memory tabulator.
@@ -259,6 +270,8 @@ def memtabviz(
             autocompletion=__find_report_formats,
         ),
     ] = None,
+    version: Annotated[Optional[bool], typer.Option(help="Show the version of memtab", callback=version_callback, is_eager=True)] = None,
+    list_reports: Annotated[Optional[bool], typer.Option(help="List available report formats", callback=list_reports_callback, is_eager=True)] = None,
 ) -> None:
     """The main command line entry point for calling the memory visual generator.
     If you want to call memtab from a python app, you should import it

@@ -7,3 +7,11 @@ Feature: Creating Visualizations
         Given a memtab JSON file
         When I run the memtab visualizer tool with a report specified
         Then I should see a visualization generated from the memtab output
+
+    Scenario: Listing Available Report Formats from memtabviz
+        When I run the memtab visualizer tool with the list-reports flag
+        Then I should see a list of available report formats
+
+    Scenario: Listing Available Report Formats from memtab
+        When I run the memtab tool with the list-reports flag
+        Then I should see a list of available report formats
