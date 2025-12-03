@@ -41,5 +41,3 @@ Differences:
   - membrowse provides its own cloud service for storing historical data, whereas memtab is designed to be self-hosted.
     - as part of this, membrowse implements an "onboarding" process to fill out historical data by analyzing previous commits.
   - memtab focuses more on the categorization of symbols
-
-Further investigation into this is warranted - to better understand how the membrowse utility addressed the challenges/shortcomings that were found with pyelftools.
