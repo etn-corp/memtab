@@ -4,8 +4,8 @@ Similar Packages
 
 .. note::
   References to pyelftools, linkerscope, and membrowse are for comparison only. These are independent projects, not affiliated with memtab.
-  Any similarities or differences noted reflect my personal opinion and are provided “as is,” without any warranty or representation.
-  Reasonable minds may differ. Do not rely on my statements for any action or inaction; any reliance is at your own risk.
+  Any similarities or differences noted reflect personal opinion and are provided “as is,” without any warranty or representation.
+  Reasonable minds may differ. Do not rely on these statements for any action or inaction; any reliance is at your own risk.
   Review and comply with all applicable third-party license terms.
 
 
@@ -42,4 +42,4 @@ Differences:
     - as part of this, membrowse implements an "onboarding" process to fill out historical data by analyzing previous commits.
   - memtab focuses more on the categorization of symbols
 
-Further investigation into this is warranted - I am curious how the membrowse utility addressed the shortcomings we found with pyelftools.
+Further investigation into this is warranted - to better understand how the membrowse utility addressed the challenges/shortcomings that were found with pyelftools.
