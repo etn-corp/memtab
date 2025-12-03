@@ -29,3 +29,15 @@
 | :gherkin-step-keyword:`When` I run the memtab visualizer tool with a report specified
 | :gherkin-step-keyword:`Then` I should see a visualization generated from the memtab output
 
+:gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Listing Available Report Formats from memtabviz`
+-----------------------------------------------------------------------------------------------------------------
+
+| :gherkin-step-keyword:`When` I run the memtab visualizer tool with the list-reports flag
+| :gherkin-step-keyword:`Then` I should see a list of available report formats
+
+:gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Listing Available Report Formats from memtab`
+--------------------------------------------------------------------------------------------------------------
+
+| :gherkin-step-keyword:`When` I run the memtab tool with the list-reports flag
+| :gherkin-step-keyword:`Then` I should see a list of available report formats
+

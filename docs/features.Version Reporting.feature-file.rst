@@ -25,3 +25,10 @@
 | :gherkin-step-keyword:`When` I run the version command
 | :gherkin-step-keyword:`Then` the version should be reported
 
+:gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Version Reporting for memtabviz`
+-------------------------------------------------------------------------------------------------
+
+| :gherkin-step-keyword:`Given` I have the memory tabulator package
+| :gherkin-step-keyword:`When` I run the memtabviz version command
+| :gherkin-step-keyword:`Then` the version should be reported
+

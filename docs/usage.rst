@@ -74,6 +74,7 @@ The command line function is `memtab`. run `memtab --help` to see the available 
    │ --clean                 --no-clean              Clean the cache [default: no-clean]                                                                                                                                                                                                                                      │
    │ --map                                   FILE    The map file to process [env var: MEMTAB_MAP] [default: None]                                                                                                                                                                                                            │
    │ --version               --no-version            Show the version of memtab [default: no-version]                                                                                                                                                                                                                         │
+   │ --list-reports          --no-list-reports       List available report formats [default: no-list-reports]                                                                                                                                                                                                                 │
    │ --install-completion                            Install completion for the current shell.                                                                                                                                                                                                                                │
    │ --show-completion                               Show completion for the current shell, to copy it or customize the installation.                                                                                                                                                                                         │
    │ --help                                          Show this message and exit.                                                                                                                                                                                                                                              │
@@ -116,6 +117,14 @@ Auto-Completion for Reports
 
 As alluded to in the above terminal window, this project is using `typer's autocompletion feature <https://typer.tiangolo.com/tutorial/options-autocompletion/>`_ to provide auto-completion for the report names.  This allows some level of self-discoverability for which reports are available on your system.
 
+If autocompletion is not available or cannot be installed, you can use the ``--list-reports`` flag to see all available report formats:
+
+.. code-block:: console
+
+   memtab --list-reports
+
+This will output a list of all available report plugins that can be used with the ``--report`` option.
+
 
 .. note::
 
@@ -140,6 +149,37 @@ As alluded to in the above terminal window, this project is using `typer's autoc
    However, we avoided this approach for two reasons:
    1. It reduces the effectivity of the ``--report`` "auto-completion" capability described above.
    2. It increases the complexity of the typer command setup in cli.py.  Right now, all of the arguments can be more-or-less "static" parameters to the method.  This approach would require that the parameter list for the command itself by dynamic, and determined by the available plugins.  It is likely do-able, but more complex than what we have today.
+
+
+memtabviz Command
+^^^^^^^^^^^^^^^^^^
+
+The ``memtabviz`` command is a companion tool that allows you to generate reports from an existing memtab JSON file without re-running the full analysis. This is useful when you want to generate different report formats or update visualizations without reprocessing the ELF file.
+
+.. code-block:: console
+
+   memtabviz --input memtab.json --report markdown
+
+The ``memtabviz`` command supports the following options:
+
+- ``--input``: Path to the JSON file to process (default: memtab.json). Can also be set via the ``MEMTAB_JSON`` environment variable.
+- ``--report``: Generate report(s) via a plugin. Can be provided multiple times with optional filenames using the ``:`` delimiter.
+- ``--version``: Show the version of memtab.
+- ``--list-reports``: List all available report formats.
+
+Example usage:
+
+.. code-block:: console
+
+   # Generate a markdown report from existing JSON
+   memtabviz --input memtab.json --report markdown:custom_report.md
+
+   # List available report formats
+   memtabviz --list-reports
+
+   # Check version
+   memtabviz --version
+
 
 Configuration
 -----------------
