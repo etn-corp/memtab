@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import platform
+import re
 import subprocess
 from functools import partial
 from pathlib import Path
@@ -210,20 +211,30 @@ def _count_sections(elf_file: str, gcc_prefix: str) -> int:
     sections_result = subprocess.check_output(readelf_sections_cmd).decode("utf-8")
     sections = [section.strip() for section in sections_result.splitlines()]
 
+    # Regex pattern to parse readelf -SW output, handles section names with spaces
+    pattern = re.compile(
+        r"^\s*\[\s*\d+\]\s+"  # [Nr] with optional whitespace
+        r"(\S.*?)\s+"  # Name (non-greedy, can contain spaces)
+        r"(\S+)\s+"  # Type
+        r"([0-9a-fA-F]+)\s+"  # Addr
+        r"([0-9a-fA-F]+)\s+"  # Off
+        r"([0-9a-fA-F]+)\s+"  # Size
+    )
+
     sections_count = 0
     for section in sections:
-        section = section.replace("[ ", "[")
-        if not section.startswith("[") or section.startswith("[Nr]"):
+        if "[Nr]" in section:
             continue
 
-        words = section.split()
-        name = words[1] if len(words) > 1 else ""
-        section_type = words[2] if len(words) > 2 else ""
-        addr = int(words[3], 16) if len(words) > 3 else 0
-        size = int(words[5], 16) if len(words) > 5 else 0
+        match = pattern.match(section)
+        if match:
+            name, section_type, addr_str, off_str, size_str = match.groups()
+            name = name.strip()
+            addr = int(addr_str, 16)
+            size = int(size_str, 16)
 
-        if not _should_ignore_section(name, section_type) and addr != 0 and size != 0:
-            sections_count += 1
+            if not _should_ignore_section(name, section_type) and addr != 0 and size != 0:
+                sections_count += 1
 
     return sections_count
 
