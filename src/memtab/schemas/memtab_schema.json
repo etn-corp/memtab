@@ -397,7 +397,7 @@
                 "type": {
                     "type": "string",
                     "description": "The type of the ELF section.",
-                    "enum": ["PROGBITS", "NOBITS", "DYNAMIC", "FINI_ARRAY", "INIT_ARRAY", "REL", "VERNEED", "VERSYM", "GNU_HASH", "NOTE", "RELA"]
+                    "enum": ["PROGBITS", "NOBITS", "DYNAMIC", "FINI_ARRAY", "INIT_ARRAY", "REL", "VERNEED", "VERSYM", "GNU_HASH", "NOTE", "RELA", "ARM_EXIDX", "ARM_ATTRIBUTES"]
                 },
                 "unused": {
                     "$ref": "#/$defs/dec_or_hex",

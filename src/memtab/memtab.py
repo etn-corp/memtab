@@ -248,6 +248,12 @@ class Memtab:
                 cpu.gcc_prefix = cpu_config["gcc_prefix"]
             if "name" in cpu_config:
                 cpu.name = cpu_config["name"]
+            if "exclude_arm_sections" in cpu_config:
+                cpu.exclude_arm_sections = cpu_config["exclude_arm_sections"]
+            if "exclude_debug_sections" in cpu_config:
+                cpu.exclude_debug_sections = cpu_config["exclude_debug_sections"]
+            if "allow_zero_address_sections" in cpu_config:
+                cpu.allow_zero_address_sections = cpu_config["allow_zero_address_sections"]
 
             if "memory regions" in cpu_config:
                 for region in cpu_config["memory regions"]:
@@ -326,6 +332,15 @@ class Memtab:
         config_dict = self.config.asdict()
         validator.validate(config_dict)
 
+        # Auto-detect if we should allow zero-address sections based on memory regions
+        # If any memory region starts at address 0, allow sections at address 0
+        if not self.config.CPU.allow_zero_address_sections:  # Only auto-detect if not explicitly set
+            for region in self.config.CPU.memory_regions:
+                if region.start == 0:
+                    self.config.CPU.allow_zero_address_sections = True
+                    logging.info(f"Auto-detected memory region '{region.name}' starting at address 0x0 - allowing zero-address sections")
+                    break
+
     def clean_cache(self) -> None:
         if os.path.exists(self.__cache_dir):
             for file in os.listdir(self.__cache_dir):
@@ -371,7 +386,11 @@ class Memtab:
         self.__calculate_metadata_for_regions()
 
         # Assign sections to symbols based on addresses
-        self.__assign_sections_to_symbols(merged_result.sections)
+        # Use filtered sections from self.sections dataframe, not unfiltered merged_result.sections
+        filtered_sections = [
+            Section(name=row["name"], address=row["address"], size=row["size"], type=row.get("type", ""), flags=row.get("flags", "")) for _, row in self.sections.iterrows()
+        ]
+        self.__assign_sections_to_symbols(filtered_sections)
 
         # Apply category assignments after all data is processed
         self.__categorize_symbols()
@@ -442,9 +461,16 @@ class Memtab:
             )
 
         df = pd.DataFrame(sections_data)
+
         if len(df) > 0:
+            # Build filter keywords based on config
+            debug_keywords = []
+            if self.config.CPU.exclude_debug_sections:
+                debug_keywords.extend(["debug", "eh_frame", "dynsym", "comment"])
+            if self.config.CPU.exclude_arm_sections:
+                debug_keywords.append("ARM")
+
             # Filter out unwanted sections
-            debug_keywords = ["debug", "ARM", "eh_frame", "dynsym", "comment"]
             debug_mask = df["name"].apply(lambda x: any(keyword in x for keyword in debug_keywords))
             df = df.loc[~debug_mask]
 
@@ -453,18 +479,25 @@ class Memtab:
                 type_mask = df["type"].str.contains("TAB", na=False)
                 df = df.loc[~type_mask]
 
-            zero_mask = (df["address"] != 0) & (df["size"] != 0)
+            # Filter sections with zero size (always)
+            # Filter sections at address 0 only if not explicitly allowed
+            if self.config.CPU.allow_zero_address_sections:
+                zero_mask = df["size"] != 0
+            else:
+                zero_mask = (df["address"] != 0) & (df["size"] != 0)
             df = df.loc[zero_mask]
 
         self.sections = df
 
     def __calculate_metadata_for_regions(self) -> None:
-        """Calculate memory region spares, based on the symbol data that has been made so far."""
+        """Calculate memory region spares, based on the ELF section data."""
         self.regions = DataFrame(self.config.CPU.memory_regions)
 
         for region_idx, region in self.regions.iterrows():
-            region_symbols = self.symbols[(self.symbols.index >= region["start"]) & (self.symbols.index <= region["end"])]
-            region_size = region_symbols["size"].sum()
+            # Use elf_sections instead of symbols for more accurate region usage
+            # Sections represent actual memory allocation, symbols may have gaps
+            region_sections = self.sections[(self.sections["address"] >= region["start"]) & (self.sections["address"] <= region["end"])]
+            region_size = region_sections["size"].sum()
             self.regions.loc[region_idx, "spare"] -= region_size
 
             if self.regions.loc[region_idx, "spare"] < 0:

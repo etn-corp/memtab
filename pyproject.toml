@@ -1,6 +1,6 @@
 [project]
 name = "memtab"
-version = "1.0.5"
+version = "1.0.6"
 description = "ELF File Memory Tabulator"
 readme = "README.rst"
 requires-python = ">=3.9"
