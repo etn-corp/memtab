@@ -194,8 +194,44 @@ The sections of the configuration:
     #. name
     #. memory-regions
         #. RAM
+    #. exclude_arm_sections (optional, default: true)
+    #. exclude_debug_sections (optional, default: true)
+    #. allow_zero_address_sections (optional, default: false)
 #. Source Code
       #. Categories
+
+CPU Section Filtering Options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The CPU section of the configuration supports three optional boolean flags that control how ELF sections are filtered:
+
+- **exclude_arm_sections** (default: ``true``): When true, filters out ARM-specific sections like
+  ``.ARM.extab`` and ``.ARM.exidx``. These sections contain exception handling and unwinding information.
+  Set to ``false`` if you want to include these sections in your memory analysis (they do consume Flash space).
+
+- **exclude_debug_sections** (default: ``true``): When true, filters out debug-related sections like
+  ``.debug_*``, ``.eh_frame``, ``.dynsym``, and ``.comment``. These are typically not loaded into device memory.
+  Keep as ``true`` for most use cases.
+
+- **allow_zero_address_sections** (default: ``false``): When false, filters out sections at address 0x0
+  (which are typically metadata like ``.strtab``). Set to ``true`` if your memory region legitimately starts
+  at address 0x0. Memtab will auto-detect this if your Flash region starts at 0x0.
+
+Example:
+
+.. code-block:: yaml
+
+   CPU:
+      gcc_prefix: arm-none-eabi-
+      name: cortex-m4
+      exclude_arm_sections: false  # Include .ARM.* sections in analysis
+      exclude_debug_sections: true  # Still filter debug sections
+      allow_zero_address_sections: false  # Filter metadata sections at addr 0
+      memory regions:
+         - Flash:
+            - name: FLASH
+              start: "0x0"
+              size: "0x100000"
 
 
 Multiple Configuration Files

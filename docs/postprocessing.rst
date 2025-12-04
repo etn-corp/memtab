@@ -31,6 +31,37 @@ Using ``jq``
 
 Note that most if not all of the examples in here were generated using GitHub Copilot, showing it the JSON file, and asking it create a command for the specific desired output.  After wrapping your head around these examples, if they don't need your specific need, you should try to do the same!
 
+Understanding Different Size Calculations
+==========================================
+
+Memtab provides multiple ways to calculate memory usage, each serving different purposes:
+
+**Symbols vs. ELF Sections vs. Regions**
+
+- **Symbols** (``size`` field): Represent named functions, variables, and objects. These are the entities the compiler/linker tracks. Summing symbol sizes gives you the memory consumed by identifiable code and data.
+
+- **Symbols** (``assigned_size`` field): The symbol's size plus any padding/gaps until the next symbol. This accounts for alignment and fragmentation between symbols within a section.
+
+- **ELF Sections** (``size`` field): The total size of each section in the ELF file as reported by ``readelf``. Sections contain both symbols and additional data like exception tables, initialization arrays, padding, and metadata.
+
+- **Regions**: High-level memory areas (e.g., Flash, RAM) defined in your config. Memtab calculates region usage by summing the ELF sections that fall within each region's address range.
+
+**Why totals differ:**
+
+When you sum up symbol sizes, you'll typically get a **lower number** than the total ELF section sizes because sections contain more than just symbols:
+
+- **Exception handling tables** (``.ARM.extab``, ``.ARM.exidx``) - compiler-generated unwinding information with no individual symbols
+- **Initialization arrays** (``init_array``, ``ctors``) - lists of function pointers without individual symbol names
+- **Padding and alignment** - gaps between symbols for proper memory alignment
+- **Section metadata** - attributes and bookkeeping information
+
+**Which calculation should you use?**
+
+- **Total memory usage**: Sum ELF section sizes (``jq '[.elf_sections[] | select(.address < 0x20000000)] | map(.size) | add'``)
+- **Analyzing what code/data contributes**: Sum symbol sizes or use categories
+- **Comparing to binutils ``size`` command**: See the section below
+- **Fragmentation analysis**: Compare symbol ``assigned_size`` to ``size`` to see gaps
+
 Calculating Size
 =========================
 
@@ -106,21 +137,50 @@ Summarizing by ELF section
         | map({(.[0].section): map(.size) | add})
         | add' memtab.json
 
-Summing up ELF Sections To match binutils ``size`` command
-===========================================================
+Correlating with Binutils Tools
+=================================
 
-This command will sum up the size of all symbols by ELF section. It will group the symbols by their ELF section and sum up their sizes. The result will be a JSON object with the ELF sections as keys and the total size as values.
+Memtab's output can be correlated with standard binutils tools like ``size`` and ``readelf``.
+
+Matching ``readelf -SW`` Section Sizes
+---------------------------------------
+
+To get the total size of ELF sections (matching what ``readelf -SW`` reports), use the ``.elf_sections`` array:
 
 .. code-block:: bash
 
-    jq '[
-        .symbols[]
-        | select(.elf_section != null)
-        | {section: .elf_section, size: .size}
-        ]
-        | group_by(.section)
-        | map({(.[0].section): map(.size) | add})
+    # Total size of all ELF sections
+    jq '[.elf_sections[] | .size] | add' memtab.json
+
+    # Size of specific sections
+    jq '.elf_sections[] | select(.name == "text" or .name == "rodata") | {name, size}' memtab.json
+
+    # Total Flash usage (sections with addresses < 0x20000000, for example)
+    jq '[.elf_sections[] | select(.address < 0x20000000)] | map(.size) | add' memtab.json
+
+Each ELF section also includes a ``calculated_symbol_size`` field showing how much of that section is accounted for by symbols:
+
+.. code-block:: bash
+
+    # Compare section sizes to symbol coverage
+    jq '.elf_sections[] | {name, size, calculated_symbol_size, gap: (.size - .calculated_symbol_size)}' memtab.json
+
+Sections with zero ``calculated_symbol_size`` (like ``.ARM.extab``, ``.ARM.exidx``) contain compiler-generated data without individual symbol names.
+
+Approximating ``size`` Command Output
+--------------------------------------
+
+The binutils ``size`` command reports text, data, and bss segment sizes. You can approximate this from memtab output:
+
+.. code-block:: bash
+
+    # Sum symbol sizes by memory type
+    jq '[.symbols[] | select(.memory_type != null) | {type: .memory_type, size: .size}]
+        | group_by(.type)
+        | map({(.[0].type): map(.size) | add})
         | add' memtab.json
+
+Note that this sums **symbol** sizes, not section sizes. For a closer match to ``size`` output, you may need to sum specific ELF sections based on your linker script.
 
 Categorizing ELF Sections into `WA` Flagged regions
 ======================================================

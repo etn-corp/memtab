@@ -52,6 +52,21 @@
                 },
                 "gcc_prefix": {
                     "type": "string"
+                },
+                "exclude_arm_sections": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Filter out .ARM.* sections (e.g., .ARM.extab, .ARM.exidx)"
+                },
+                "exclude_debug_sections": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Filter out debug sections (.debug_*, .eh_frame, etc.)"
+                },
+                "allow_zero_address_sections": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Allow sections starting at address 0x0. Auto-detected if any memory region starts at 0"
                 }
             },
             "oneOf": [

@@ -145,6 +145,9 @@ class MemtabCPU:
     memory_regions: List[Region] = field(default_factory=list)
     gcc_prefix: str = ""
     name: str = ""
+    exclude_arm_sections: bool = True  # Filter out .ARM.* sections (exception handling)
+    exclude_debug_sections: bool = True  # Filter out .debug_* sections
+    allow_zero_address_sections: bool = False  # Allow sections starting at address 0
 
     def __bool__(self) -> bool:
         return bool(self.memory_regions) or bool(self.gcc_prefix) or bool(self.name)
