@@ -11,10 +11,6 @@ inputs:
   sdk_path:
     required: false
     description: Where on your System the SDK / toolchain resides
-  running_in_container:
-    required: false
-    default: 'false'
-    description: flag when running memtab in container
   source_directory:
     required: false
     description: The source directory relative to the workspace where memtab should run
@@ -29,28 +25,25 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set environment variables for non-container
-      if: inputs.running_in_container == 'false'
+    # Workaround when working in container, https://github.com/actions/runner/issues/2058
+    # Use ${{ env.WORKSPACE }} in succeeding steps to access github workspace path
+    - name: Set environment variables
       run: |
-        echo "WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
-        echo "ACTION_PATH=${{ github.action_path }}" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Set environment variables for container
-      if: inputs.running_in_container == 'true'
-      run: |
-        echo "WORKSPACE=${{ env.WORKSPACE }}" >> $GITHUB_ENV
-        if [ -n "${{ env.ACTION_PATH }}" ]; then
-          echo "ACTION_PATH=${{ env.ACTION_PATH }}" >> $GITHUB_ENV
-        elif [ -n "$GITHUB_ACTION_PATH" ]; then
-          echo "ACTION_PATH=$GITHUB_ACTION_PATH" >> $GITHUB_ENV
-        else
-          # Final fallback
-          ACTION_REF="${{ github.action_ref }}"
-          if [ -z "$ACTION_REF" ]; then
-            ACTION_REF="main"
+        if [[ -n "${{ job.container.id }}" ]]; then
+          echo "WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          # In containers, action_path context may not be available
+          if [ -n "$GITHUB_ACTION_PATH" ]; then
+            echo "ACTION_PATH=$GITHUB_ACTION_PATH" >> $GITHUB_ENV
+          else
+            ACTION_REF="${{ github.action_ref }}"
+            if [ -z "$ACTION_REF" ]; then
+              ACTION_REF="main"
+            fi
+            echo "ACTION_PATH=/__w/_actions/etn-corp/memtab/$ACTION_REF" >> $GITHUB_ENV
           fi
-          echo "ACTION_PATH=/__w/_actions/etn-corp/memtab/$ACTION_REF" >> $GITHUB_ENV
+        else
+          echo "WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "ACTION_PATH=${{ github.action_path }}" >> $GITHUB_ENV
         fi
       shell: bash
 
