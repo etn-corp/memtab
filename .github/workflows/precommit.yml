@@ -4,6 +4,9 @@ name: 'run precommit hooks'
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   precommit:
     runs-on: ubuntu-latest
