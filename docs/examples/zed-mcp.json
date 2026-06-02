@@ -1,0 +1,13 @@
+{
+    "context_servers": {
+        "memtab": {
+            "command": {
+                "path": "memtab_mcp",
+                "env": {
+                    "MEMTAB_CONFIG": "/path/to/your/memtab.yml",
+                    "MEMTAB_ELF": "/path/to/your/app.elf"
+                }
+            }
+        }
+    }
+}

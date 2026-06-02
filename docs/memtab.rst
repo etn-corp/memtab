@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   memtab.mcp
    memtab.parsers
 
 Submodules
