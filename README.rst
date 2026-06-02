@@ -108,7 +108,15 @@ To use memtab with AI assistants through the Model Context Protocol:
    # Start the MCP server
    uv run memtab_mcp
 
-Then configure your AI assistant (GitHub Copilot, Claude Desktop, Cursor, or Zed) to connect to the server. For detailed configuration examples, see the `MCP Server documentation <https://etn-corp.github.io/memtab/mcp.html>`_.
+Then configure your AI assistant (GitHub Copilot, Claude Desktop, Cursor, or Zed) to connect to the server. For detailed configuration examples, security defaults, and MCP-versus-skill guidance, see the `MCP Server documentation <https://etn-corp.github.io/memtab/mcp.html>`_.
+
+The MCP server enforces baseline file-access controls by default:
+
+- File access is constrained to allowlisted roots.
+- Recursive ELF discovery is bounded by default.
+- Oversized ELF files are rejected.
+
+These defaults can be tuned with environment variables documented at the link above.
 
 **Example configuration for VS Code (.vscode/mcp.json):**
 

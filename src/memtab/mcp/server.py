@@ -22,13 +22,82 @@ from fastmcp import FastMCP
 
 from memtab.mcp.discovery import (
     find_elf_files,
+    get_allowed_roots,
     get_config_file,
+    get_default_search_depth,
+    is_within_allowed_roots,
     resolve_elf_path,
 )
 from memtab.memtab import Memtab
 
 mcp = FastMCP("Memory Tabulator MCP Server")
 logger = logging.getLogger(__name__)
+
+
+def _get_max_elf_bytes() -> int:
+    """Get the maximum ELF size allowed for MCP analysis.
+
+    Uses MEMTAB_MAX_ELF_BYTES when set to a positive integer,
+    otherwise defaults to 500 MB.
+
+    :return: Maximum allowed ELF file size in bytes.
+    """
+    configured_limit = os.environ.get("MEMTAB_MAX_ELF_BYTES")
+    if configured_limit and configured_limit.isdigit():
+        max_bytes = int(configured_limit)
+        if max_bytes > 0:
+            return max_bytes
+    return 500 * 1024 * 1024
+
+
+def _normalize_input_path(path_or_uri: str) -> Path:
+    """Normalize file input that may be a local path or file:// URI.
+
+    :param path_or_uri: File path input from MCP resource/tool.
+    :return: Normalized filesystem path.
+    """
+    if path_or_uri.startswith("file://"):
+        parsed = urlparse(path_or_uri)
+        file_path = unquote(parsed.path)
+        if os.name == "nt" and file_path.startswith("/") and ":" in file_path:
+            file_path = file_path[1:]
+        return Path(file_path).resolve()
+    return Path(path_or_uri).resolve()
+
+
+def _enforce_allowed_file_access(path_or_uri: str, *, expected_suffixes: tuple[str, ...] | None = None) -> Path:
+    """Validate that a path is inside allowlisted roots.
+
+    :param path_or_uri: File path or file:// URI.
+    :param expected_suffixes: Optional allowed file suffixes.
+    :return: Validated and resolved path.
+    :raises PermissionError: If the path is outside allowed roots.
+    :raises ValueError: If file extension does not match expected suffixes.
+    """
+    path_obj = _normalize_input_path(path_or_uri)
+    allowed_roots = get_allowed_roots()
+
+    if not is_within_allowed_roots(path_obj, allowed_roots):
+        allowed_display = ", ".join(str(root) for root in allowed_roots)
+        raise PermissionError(f"Path '{path_obj}' is outside allowed roots: {allowed_display}")
+
+    if expected_suffixes and path_obj.suffix.lower() not in expected_suffixes:
+        allowed_suffixes = ", ".join(expected_suffixes)
+        raise ValueError(f"Invalid file type '{path_obj.suffix}'. Allowed suffixes: {allowed_suffixes}")
+
+    return path_obj
+
+
+def _enforce_elf_size_limit(elf_path: Path) -> None:
+    """Validate ELF file size before analysis.
+
+    :param elf_path: Path to the ELF file.
+    :raises ValueError: If ELF file exceeds allowed size.
+    """
+    max_bytes = _get_max_elf_bytes()
+    elf_size = elf_path.stat().st_size
+    if elf_size > max_bytes:
+        raise ValueError(f"ELF file '{elf_path}' is too large ({elf_size} bytes). Maximum allowed size is {max_bytes} bytes.")
 
 
 @mcp.resource("elf://files")
@@ -38,7 +107,11 @@ def list_elf_files() -> List[Dict[str, Any]]:
     Returns a list of ELF files found in the workspace with metadata and annotations
     to help clients understand their purpose and priority for memory analysis.
     """
-    elf_files = find_elf_files()
+    elf_files = find_elf_files(
+        start_dir=os.getcwd(),
+        max_depth=get_default_search_depth(),
+        allowed_roots=get_allowed_roots(),
+    )
     resources = []
 
     for elf_path in elf_files:
@@ -75,20 +148,12 @@ def read_elf_file(path: str) -> str:
     :return: Formatted metadata string.
     :raises FileNotFoundError: If the ELF file doesn't exist.
     """
-    # Extract path from URI if needed
-    if path.startswith("file://"):
-        parsed = urlparse(path)
-        file_path = unquote(parsed.path)
-        # Handle Windows paths
-        if os.name == "nt" and file_path.startswith("/") and ":" in file_path:
-            file_path = file_path[1:]
-    else:
-        file_path = path
-
-    path_obj = Path(file_path)
+    path_obj = _enforce_allowed_file_access(path, expected_suffixes=(".elf",))
 
     if not path_obj.exists():
-        raise FileNotFoundError(f"ELF file not found: {file_path}")
+        raise FileNotFoundError(f"ELF file not found: {path_obj}")
+
+    _enforce_elf_size_limit(path_obj)
 
     stat = path_obj.stat()
 
@@ -113,13 +178,21 @@ def _get_memory_table(elf: str | None) -> List[Dict[str, Any]]:
     :param elf: Path to ELF file, file:// URI, or None to auto-discover.
     :return: List of top-10 symbol dictionaries sorted by descending size.
     """
-    elf = resolve_elf_path(elf)
-    config = get_config_file(elf)
+    resolved_elf = resolve_elf_path(elf)
+    elf_path = _enforce_allowed_file_access(resolved_elf, expected_suffixes=(".elf",))
+    if not elf_path.exists():
+        raise FileNotFoundError(f"ELF file not found: {elf_path}")
+    _enforce_elf_size_limit(elf_path)
 
-    logger.info("Using configuration file: %s", config)
-    logger.info("Using ELF file: %s", elf)
+    config = get_config_file(str(elf_path))
+    config_path = _enforce_allowed_file_access(config, expected_suffixes=(".yml", ".yaml"))
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    tabulator = Memtab(elf=Path(elf), config=[Path(config)], cache=True)
+    logger.info("Using configuration file: %s", config_path)
+    logger.info("Using ELF file: %s", elf_path)
+
+    tabulator = Memtab(elf=elf_path, config=[config_path], cache=True)
     tabulator.tabulate()
     logger.info("Tabulation complete.")
 
@@ -150,16 +223,20 @@ def create_memtab_config(elf: str | None) -> str:
     :param elf: Path to ELF file, file:// URI, or None to auto-discover.
     :return: YAML configuration content as a string.
     """
-    elf = resolve_elf_path(elf)
+    resolved_elf = resolve_elf_path(elf)
+    elf_path = _enforce_allowed_file_access(resolved_elf, expected_suffixes=(".elf",))
+    if not elf_path.exists():
+        raise FileNotFoundError(f"ELF file not found: {elf_path}")
+    _enforce_elf_size_limit(elf_path)
 
     # Create a Memtab instance to extract memory information from the ELF
     # This will auto-generate default config if none exists
-    tabulator = Memtab(elf=Path(elf), config=[], cache=True)
+    tabulator = Memtab(elf=elf_path, config=[], cache=True)
 
     # Get the configuration as a dictionary
     config_dict = tabulator.config.asdict()
 
-    logger.info("Generated configuration based on ELF file: %s", elf)
+    logger.info("Generated configuration based on ELF file: %s", elf_path)
 
     # Convert the configuration to YAML string
     yaml_content = yaml.safe_dump(config_dict, default_flow_style=False, sort_keys=False)

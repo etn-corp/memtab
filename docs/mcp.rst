@@ -48,6 +48,42 @@ The MCP server supports these environment variables for configuration:
 * ``MEMTAB_ELF`` - Default ELF file path (can use ``file://`` URIs)
 * ``MEMTAB_CONFIG`` - Default configuration file path
 * ``MEMTAB_SEARCH_DEPTH`` - Maximum directory depth when searching for .elf files
+* ``MEMTAB_MCP_DEFAULT_SEARCH_DEPTH`` - Default recursive search depth used by MCP discovery (defaults to ``4``)
+* ``MEMTAB_ALLOWED_ROOTS`` - Allowlisted root directories for MCP file access, separated by OS path separator (defaults to current working directory)
+* ``MEMTAB_MAX_ELF_BYTES`` - Maximum ELF file size accepted by MCP tools/resources (defaults to ``524288000``)
+
+Security Model
+--------------
+
+The memtab MCP server enforces baseline safety checks so each user does not need
+to manually secure their local integration:
+
+* MCP file access is restricted to allowlisted roots.
+* Recursive ELF discovery is bounded by default.
+* ELF files larger than a configured threshold are rejected.
+
+These checks are enforced by the tool itself. Users can tune limits via
+environment variables, but safe defaults are active without extra setup.
+
+MCP Versus Copilot Skills
+-------------------------
+
+Both MCP and skills are useful, but they solve different problems:
+
+Use MCP when:
+
+* You want one integration that works across MCP-capable hosts.
+* You need tool/resource portability beyond VS Code.
+* You want structured tool interfaces that other assistants can discover.
+
+Use a Copilot skill when:
+
+* Your primary audience is GitHub Copilot in VS Code.
+* You want faster iteration on workflow logic and prompting behavior.
+* You want opinionated orchestration around memtab CLI commands.
+
+Recommended approach for most teams: keep MCP for interoperability, and add a
+Copilot skill to provide the most productive day-to-day workflow in VS Code.
 
 Configuration Examples
 ----------------------

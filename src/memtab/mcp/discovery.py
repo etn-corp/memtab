@@ -16,11 +16,59 @@ from typing import List
 from urllib.parse import unquote, urlparse
 
 
-def find_elf_files(start_dir: str | None = None, max_depth: int | None = None) -> List[str]:
+def get_default_search_depth() -> int:
+    """Get the default recursive search depth for MCP ELF discovery.
+
+    Uses MEMTAB_MCP_DEFAULT_SEARCH_DEPTH if set to a non-negative integer,
+    otherwise defaults to 4 to avoid expensive unbounded scans.
+
+    :return: Default maximum search depth.
+    """
+    configured_depth = os.environ.get("MEMTAB_MCP_DEFAULT_SEARCH_DEPTH")
+    if configured_depth and configured_depth.isdigit():
+        return int(configured_depth)
+    return 4
+
+
+def get_allowed_roots() -> List[Path]:
+    """Get the allowlisted filesystem roots for MCP file access.
+
+    Uses MEMTAB_ALLOWED_ROOTS (path-separated) when set. Otherwise, defaults
+    to the current working directory.
+
+    :return: List of resolved allowed root directories.
+    """
+    configured_roots = os.environ.get("MEMTAB_ALLOWED_ROOTS")
+    if configured_roots:
+        roots = [Path(root).resolve() for root in configured_roots.split(os.pathsep) if root.strip()]
+        if roots:
+            return roots
+    return [Path(os.getcwd()).resolve()]
+
+
+def is_within_allowed_roots(path: Path, allowed_roots: List[Path] | None = None) -> bool:
+    """Check whether a path resolves under any allowlisted root.
+
+    :param path: Path to validate.
+    :param allowed_roots: Optional explicit allowed roots.
+    :return: True when the path is under an allowed root.
+    """
+    roots = allowed_roots if allowed_roots is not None else get_allowed_roots()
+    resolved_path = path.resolve()
+
+    for root in roots:
+        resolved_root = root.resolve()
+        if resolved_path == resolved_root or resolved_path.is_relative_to(resolved_root):
+            return True
+    return False
+
+
+def find_elf_files(start_dir: str | None = None, max_depth: int | None = None, allowed_roots: List[Path] | None = None) -> List[str]:
     """Recursively find all .elf files in the specified directory.
 
     :param start_dir: Directory to start search from. Defaults to current working directory.
-    :param max_depth: Maximum depth to search. None means unlimited. Controlled by MEMTAB_SEARCH_DEPTH env var.
+    :param max_depth: Maximum depth to search. Defaults to a bounded MCP-safe value.
+    :param allowed_roots: Optional list of roots to constrain discovered paths.
     :return: List of absolute paths to .elf files.
     """
     if start_dir is None:
@@ -30,9 +78,15 @@ def find_elf_files(start_dir: str | None = None, max_depth: int | None = None) -
         max_depth_str = os.environ.get("MEMTAB_SEARCH_DEPTH")
         if max_depth_str and max_depth_str.isdigit():
             max_depth = int(max_depth_str)
+        else:
+            max_depth = get_default_search_depth()
 
     elf_files = []
     start_path = Path(start_dir).resolve()
+    roots = allowed_roots if allowed_roots is not None else get_allowed_roots()
+
+    if not is_within_allowed_roots(start_path, roots):
+        return []
 
     def _search(path: Path, current_depth: int) -> None:
         """Recursively search for .elf files."""
@@ -41,9 +95,9 @@ def find_elf_files(start_dir: str | None = None, max_depth: int | None = None) -
 
         try:
             for item in path.iterdir():
-                if item.is_file() and item.suffix == ".elf":
+                if item.is_file() and item.suffix == ".elf" and is_within_allowed_roots(item, roots):
                     elf_files.append(str(item.absolute()))
-                elif item.is_dir():
+                elif item.is_dir() and is_within_allowed_roots(item, roots):
                     _search(item, current_depth + 1)
         except (PermissionError, OSError):
             # Skip directories we can't access
