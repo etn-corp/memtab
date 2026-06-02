@@ -273,7 +273,10 @@ class Memtab:
         """Process source code-related configuration."""
         if "Source Code" in config_data:
             source_code_config = config_data["Source Code"]
-            self.config.SourceCode = MemtabSourceCode(source_code_config["categories"], source_code_config["root"])
+            self.config.SourceCode = MemtabSourceCode(
+                categories=source_code_config.get("categories", []),
+                root=source_code_config.get("root", ""),
+            )
 
     def __process_project_config(self, config_data: Dict[str, Any], project: Optional[str]) -> None:
         """Process project-related configuration."""
