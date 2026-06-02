@@ -87,7 +87,7 @@ repos:
       - id: doc8
         args: ["--ignore-path", "docs/_build"]
   - repo: https://github.com/crate-ci/typos
-    rev: v1
+    rev: v1.47.0
     hooks:
       - id: typos
   - repo: https://github.com/codespell-project/codespell
