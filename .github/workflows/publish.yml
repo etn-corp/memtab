@@ -7,6 +7,8 @@ on:
       - completed
     branches:
       - main
+permissions:
+  contents: read
 jobs:
   build:
     name: Build distribution 📦
@@ -29,7 +31,7 @@ jobs:
     - name: Build distribution 📦
       run: uv build
     - name: Store the distribution packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: python-package-distributions
         path: dist/
@@ -45,6 +47,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/memtab
     permissions:
+      contents: read
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
     - name: Download all the dists
@@ -66,6 +69,7 @@ jobs:
       url: https://test.pypi.org/p/memtab
 
     permissions:
+      contents: read
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:

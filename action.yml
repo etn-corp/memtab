@@ -92,14 +92,14 @@ runs:
 
     - name: Publish Memory Tabulator Results (Windows)
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ env.WORKSPACE }}\${{ inputs.source_directory }}\memtab.json
 
     - name: Publish Memory Tabulator Results (Linux)
       if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ env.WORKSPACE }}/${{ inputs.source_directory }}/memtab.json
