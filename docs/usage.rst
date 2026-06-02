@@ -184,7 +184,7 @@ Example usage:
 Configuration
 -------------
 The configuration file is a YAML file that contains the configuration for the memory tabulator. It is used to specify the input data, the output data, and the options for the memory tabulator.
-The schema for the configuration file is bundled with the project, and can be found in the `src/memtab/schemas/memtab-config-schema.json` file.
+The schema for the configuration file is bundled with the project, and can be found in the ``src/memtab/schemas/memtab_config_file_schema.json`` file.
 The schema is used to validate the configuration file, and to provide autocompletion for the configuration file. If you are using an IDE like VSCode, consider using this schema to validate the file while you are editing it for faster feedback.
 
 The sections of the configuration:
