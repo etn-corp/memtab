@@ -234,7 +234,7 @@ class MemtabParser:
         result = subprocess.run(full_command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            raise RuntimeError(f"Command '{' '.join(full_command)}' failed with return code {result.returncode}.\n" f"Error: {result.stderr}")
+            raise RuntimeError(f"Command '{' '.join(full_command)}' failed with return code {result.returncode}.\nError: {result.stderr}")
 
         if self.cache:
             with open(cache_file, "w") as f:

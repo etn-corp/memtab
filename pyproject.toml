@@ -192,10 +192,12 @@ ignore_directives = [
 count = true
 quiet-level = 3
 skip = ["*.ipynb"]
+ignore-words-list = "aranges"
 
 
 [tool.typos.default.extend-words]
 RELA = "RELA"
+aranges = "aranges"
 
 [tool.doc8]
 max-line-length = 300  # somewhat arbitrary, but seems to be a good compromise
