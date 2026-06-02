@@ -218,7 +218,7 @@ An example minimal configuration file might look something like this:
              start: "0x20000000"
              size: "0x8000"
    Source Code:
-      root: "/"
+      root: /
       categories:
         - name: All
           categories:
