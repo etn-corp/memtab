@@ -726,7 +726,7 @@ class Memtab:
                 map_sections_count = len(map_sections)
 
                 if elf_sections_count != map_sections_count:
-                    logging.warning(f"Section count mismatch: ELF file has {elf_sections_count} sections, " f"map file has {map_sections_count} sections")
+                    logging.warning(f"Section count mismatch: ELF file has {elf_sections_count} sections, map file has {map_sections_count} sections")
                 else:
                     logging.info(f"Section count matches: {elf_sections_count} sections in both ELF and map files")
 

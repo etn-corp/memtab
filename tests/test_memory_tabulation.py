@@ -472,6 +472,6 @@ def then_output_should_be_correlated_to_ground_truth(elf_file: str, config_files
                     # check the number of symbols
                     assert len(json_response["symbols"]) <= symbol_count, f"Expected at most {symbol_count} symbols, got {len(json_response['symbols'])} symbols in {result}"
                     # check the number of sections
-                    assert (
-                        len(json_response["elf_sections"]) == section_count
-                    ), f"Expected exactly {section_count} sections, got {len(json_response['elf_sections'])} sections in {result}"
+                    assert len(json_response["elf_sections"]) == section_count, (
+                        f"Expected exactly {section_count} sections, got {len(json_response['elf_sections'])} sections in {result}"
+                    )
