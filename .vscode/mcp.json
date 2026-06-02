@@ -1,0 +1,16 @@
+{
+    "servers": {
+        "memtab": {
+            "type": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "memtab_mcp"
+            ],
+            "env": {
+                "MEMTAB_CONFIG": "${workspaceFolder}/tests/memtab.yml"
+            }
+        }
+    },
+    "inputs": []
+}

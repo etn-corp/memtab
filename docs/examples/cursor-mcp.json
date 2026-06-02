@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "memtab": {
+            "command": "memtab_mcp",
+            "env": {
+                "MEMTAB_CONFIG": "${workspaceFolder}/memtab.yml",
+                "MEMTAB_ELF": "${workspaceFolder}/build/app.elf"
+            }
+        }
+    }
+}

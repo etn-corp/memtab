@@ -29,6 +29,7 @@ Start Your Journey
    docs
    issues
    usage
+   mcp
    architecture
    postprocessing
    contributing

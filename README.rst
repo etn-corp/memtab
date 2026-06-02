@@ -15,6 +15,7 @@ Features
 
 - Command Line Interface (CLI)
 - Python library
+- MCP (Model Context Protocol) server for AI assistants
 - Generates machine-readable reports
 - Generates human-readable reports
 
@@ -32,6 +33,21 @@ You can also install it directly from git if desired:
 .. code-block:: sh
 
    pip install git+https://github.com/etn-corp/memtab.git
+
+MCP Server Installation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use memtab as an MCP server with AI assistants (requires Python >=3.10):
+
+.. code-block:: sh
+
+   pip install memtab[mcp]
+
+Or with uv:
+
+.. code-block:: sh
+
+   uv pip install memtab[mcp]
 
 Usage
 -----
@@ -81,6 +97,45 @@ To use this as a GitHub Action:
         elf: ${{ github.workspace }}\source\build\zephyr\zephyr.elf
 
 The action will generate the markdown output (using the `--md` argument) and upload that markdown as a step summary.
+
+MCP Server
+~~~~~~~~~~
+
+To use memtab with AI assistants through the Model Context Protocol:
+
+.. code-block:: sh
+
+   # Start the MCP server
+   uv run memtab_mcp
+
+Then configure your AI assistant (GitHub Copilot, Claude Desktop, Cursor, or Zed) to connect to the server. For detailed configuration examples, security defaults, and MCP-versus-skill guidance, see the `MCP Server documentation <https://etn-corp.github.io/memtab/mcp.html>`_.
+
+The MCP server enforces baseline file-access controls by default:
+
+- File access is constrained to allowlisted roots.
+- Recursive ELF discovery is bounded by default.
+- Oversized ELF files are rejected.
+
+These defaults can be tuned with environment variables documented at the link above.
+
+**Example configuration for VS Code (.vscode/mcp.json):**
+
+.. code-block:: json
+
+   {
+       "servers": {
+           "memtab": {
+               "type": "stdio",
+               "command": "uv",
+               "args": ["run", "memtab_mcp"],
+               "env": {
+                   "MEMTAB_CONFIG": "${workspaceFolder}/memtab.yml"
+               }
+           }
+       }
+   }
+
+Once configured, you can ask your AI assistant questions like "What are the largest symbols in my ELF file?" and it will automatically use memtab to analyze your firmware.
 
 Developing
 ----------
