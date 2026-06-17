@@ -5,8 +5,8 @@
 import os
 from pathlib import Path
 
-from invoke.context import Context
 from invoke import task
+from invoke.context import Context
 
 
 @task(aliases=["v"])
