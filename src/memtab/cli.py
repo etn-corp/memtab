@@ -135,9 +135,8 @@ def __find_report_formats() -> List[str]:  # pragma: no cover
 def __gen_reports(reports: Optional[List[ReportType]], tabulator: Memtab) -> None:
     if reports is None:
         return
-    for requested_report in reports:
-        # ReportType.convert() returns Tuple[str, str]; cast tells ty what typer gives us at runtime
-        requested_report_name, requested_report_filename = cast(ReportParsed, requested_report)
+    # ReportType.convert() returns Tuple[str, str]; cast the list once so ty knows the item shape
+    for requested_report_name, requested_report_filename in cast(List[ReportParsed], reports):
         for plugin in pm.get_plugins():
             if hasattr(plugin, "report_name") and plugin.report_name == requested_report_name:
                 plugin.generate_report(memtab=tabulator, filename=requested_report_filename)

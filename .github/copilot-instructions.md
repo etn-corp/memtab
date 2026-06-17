@@ -32,7 +32,7 @@ As part of using `uv`, that tends to be the way we run the code, e.g. `uv run sr
 
 The exception to the above is when running `pre-commit`, which manages its _own_ virtual environment.  So in the case of pre-commit things (like `ruff`, `interrogate`, etc.), we should run `pre-commit run ruff` etc., not just `ruff`, to ensure that the pre-commit hooks are run using pre-commit's environment.
 
-Note: `ty` is an exception to the pre-commit environment rule — it should be run via `uv check`, not through pre-commit, because the `ty` pre-commit hook downloads a standalone binary that may require additional SSL trust configuration.
+Note: Prefer running `ty` via `uv check` for local development; pre-commit may also run `ty`, but the hook downloads a standalone binary that can require additional SSL trust configuration in some environments.
 
 Basically, between `uv` and `pre-commit`, if you are running a command that depends on python, it should be through those tools, not the native python environment.
 

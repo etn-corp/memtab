@@ -157,7 +157,7 @@ omit-covered-files = false
 # pyproject.toml, we need to "inline" a legacy ini config as a multiline string.
 legacy_tox_ini = """
 [tox]
-envlist = py38, py39, py310, py311, py312, py313
+envlist = py39, py310, py311, py312, py313
 
 [testenv]
 skip_install = true
