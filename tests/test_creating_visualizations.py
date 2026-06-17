@@ -14,9 +14,11 @@ from hypothesis_jsonschema import from_schema
 from pytest import CaptureFixture
 from pytest_bdd import (
     given,
-    scenario,
     then,
     when,
+)
+from pytest_bdd import (
+    scenario as _scenario_base,
 )
 from typer.testing import CliRunner
 
@@ -26,7 +28,7 @@ from memtab.cli import vizapp
 # boilerplate to shorten the scenario names
 ####################
 feature_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../features")
-scenario = partial(scenario, os.path.join(feature_dir, "Creating Visualizations.feature"))
+scenario = partial(_scenario_base, os.path.join(feature_dir, "Creating Visualizations.feature"))
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 

@@ -15,7 +15,8 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import yaml
 from jsonschema import validate
 from pytest import CaptureFixture
-from pytest_bdd import given, parsers, scenario, then, when
+from pytest_bdd import given, parsers, then, when
+from pytest_bdd import scenario as _scenario_base
 from typer.testing import CliRunner
 
 from memtab.cli import app
@@ -24,7 +25,7 @@ from memtab.cli import app
 # boilerplate to shorten the scenario names
 ####################
 feature_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../features")
-scenario = partial(scenario, os.path.join(feature_dir, "Memory Tabulation.feature"))
+scenario = partial(_scenario_base, os.path.join(feature_dir, "Memory Tabulation.feature"))
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 

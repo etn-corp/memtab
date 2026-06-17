@@ -16,7 +16,7 @@ import shutil
 import warnings
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import yaml
@@ -496,21 +496,23 @@ class Memtab:
         for region_idx, region in self.regions.iterrows():
             # Use elf_sections instead of symbols for more accurate region usage
             # Sections represent actual memory allocation, symbols may have gaps
+            region_idx_int = cast(int, region_idx)
             region_sections = self.sections[(self.sections["address"] >= region["start"]) & (self.sections["address"] <= region["end"])]
             region_size = region_sections["size"].sum()
-            self.regions.loc[region_idx, "spare"] -= region_size
-
-            if self.regions.loc[region_idx, "spare"] < 0:
-                raise ValueError(f"Spare memory for region {region['name']} went below ({self.regions.loc[region_idx, 'spare']})")
+            self.regions.loc[region_idx_int, "spare"] -= region_size
+            spare = cast(int, self.regions.loc[region_idx_int, "spare"])
+            if spare < 0:
+                raise ValueError(f"Spare memory for region {region['name']} went below ({spare})")
         # get the lowest from self.regions where the region is RAM
         self.lowest_RAM_addr = self.regions[self.regions["region"] == "RAM"]["start"].min()
 
     def __assign_regions_to_symbols(self) -> None:
         """Assign memory regions to symbols based on their addresses."""
         for idx, _ in self.symbols.iterrows():
-            region, subregion = self.__get_region_for_address(idx)
-            self.symbols.at[idx, "region"] = region
-            self.symbols.at[idx, "subregion"] = subregion
+            idx_int = cast(int, idx)
+            region, subregion = self.__get_region_for_address(idx_int)
+            self.symbols.at[idx_int, "region"] = region
+            self.symbols.at[idx_int, "subregion"] = subregion
 
     def __get_region_for_address(self, addr: int) -> Tuple[str, str]:
         """Get the region and subregion for a given address."""
@@ -555,8 +557,9 @@ class Memtab:
         # Apply categorization to each symbol
         categories = self.__config.SourceCode.categories
         for idx, row in self.symbols.iterrows():
+            idx_int = cast(int, idx)
             symbol_categories = categorize_symbol(
-                Symbol(name=row["symbol"], address=idx, file=row["file"], size=row["size"], type=row["memory_type"]),
+                Symbol(name=row["symbol"], address=idx_int, file=row["file"], size=row["size"], type=row["memory_type"]),
                 categories,
                 self.__config.SourceCode.root,
             )
@@ -569,9 +572,10 @@ class Memtab:
             symbol_categories_as_dict = {str(i): category for i, category in enumerate(symbol_categories)}
 
             try:
-                self.symbols.at[idx, "categories"] = symbol_categories_as_dict
+                # Categories are stored as a nested dict in an object-dtype column; cast to Any to satisfy pandas stubs
+                self.symbols.at[idx_int, "categories"] = cast(Any, symbol_categories_as_dict)
             except ValueError:
-                logging.warning(f"Failed to update categories for symbol at address {idx}. ")
+                logging.warning(f"Failed to update categories for symbol at address {idx_int}. ")
 
     def __sanity_check(self) -> None:
         """Perform sanity checks against other binutils outputs."""

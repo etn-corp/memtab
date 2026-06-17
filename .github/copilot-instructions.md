@@ -10,7 +10,7 @@ We use typer for command line interfaces.
 
 We use sphinx for documentation generation.
 
-We use mypy for type checking.
+We use ty for type checking. ty is configured under `[tool.ty]` in `pyproject.toml`. ty is run via `uv check` for local development. When using `DataFrame.iterrows()`, the index is typed as `Hashable` by the pandas stubs — use `typing.cast(int, idx)` (not `int(idx)`) to assert the correct type to ty. `cast()` is a zero-cost compile-time-only assertion; it does not coerce values at runtime.
 
 We use ruff for code formatting and linting.
 
@@ -30,10 +30,14 @@ We favor using pandas/dataframe constructs as much as possible for storing the s
 
 As part of using `uv`, that tends to be the way we run the code, e.g. `uv run src/memtab.py`, or `uv run pytest`.  Do that instead of just `pytest`.
 
-The exception to the above is when running `pre-commit`, which manages its _own_ virtual environment.  So in the case of pre-commit things (like `mypy`, `ruff`, etc.), we should run `pre-commit run mypy` etc., not just `mypy`, to ensure that the pre-commit hooks are run, using pre-commits environment.
+The exception to the above is when running `pre-commit`, which manages its _own_ virtual environment.  So in the case of pre-commit things (like `ruff`, `interrogate`, etc.), we should run `pre-commit run ruff` etc., not just `ruff`, to ensure that the pre-commit hooks are run using pre-commit's environment.
+
+Note: `ty` is an exception to the pre-commit environment rule — it should be run via `uv check`, not through pre-commit, because the `ty` pre-commit hook downloads a standalone binary that may require additional SSL trust configuration.
 
 Basically, between `uv` and `pre-commit`, if you are running a command that depends on python, it should be through those tools, not the native python environment.
 
 We follow [semantic versioning](https://semver.org/) for versioning.
+
+All commits must be signed off with `git commit -s` (or `--signoff`), which appends a `Signed-off-by:` trailer using the committer's name and email. This is required for the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 
 For logging, we use the standard library `logging` module, and follow its best practices, unless coming from the command line functions, in which case we use `typer`'s built-in logging support like `echo`.

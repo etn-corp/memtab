@@ -12,7 +12,7 @@ import os
 from glob import glob
 from importlib.metadata import version as vers
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import click
 import pluggy
@@ -23,6 +23,9 @@ from typing_extensions import Annotated, Optional
 from memtab.memtab import Memtab
 from memtab.viz import MemtabMarkdownReportSpec
 from memtab.vizhookspecs import MemtabVisualizerSpec
+
+# ReportType.convert() returns (report_name, filename) — alias for readability
+ReportParsed = Tuple[str, str]
 
 # region plugin manager
 classname = "memtab"
@@ -70,7 +73,7 @@ pm.register(MemtabMarkdownReportSpec())
 
 
 # region handler for report argument
-class ReportType(click.ParamType):  # type: ignore
+class ReportType(click.ParamType):
     """Custom type to parse --report arguments as 'type[:filename]'."""
 
     name = "report"
@@ -133,8 +136,8 @@ def __gen_reports(reports: Optional[List[ReportType]], tabulator: Memtab) -> Non
     if reports is None:
         return
     for requested_report in reports:
-        requested_report_name = requested_report[0]
-        requested_report_filename = requested_report[1]
+        # ReportType.convert() returns Tuple[str, str]; cast tells ty what typer gives us at runtime
+        requested_report_name, requested_report_filename = cast(ReportParsed, requested_report)
         for plugin in pm.get_plugins():
             if hasattr(plugin, "report_name") and plugin.report_name == requested_report_name:
                 plugin.generate_report(memtab=tabulator, filename=requested_report_filename)
