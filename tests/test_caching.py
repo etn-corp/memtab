@@ -8,13 +8,14 @@ import random
 import string
 import time
 from functools import partial
-from typing import Dict, Generator, List, Union
+from typing import Generator, List, TypedDict
 
 from appdirs import (
     user_cache_dir,  # there is some "implementation awareness" here... but I think its ok
 )
 from pytest import CaptureFixture, fixture
-from pytest_bdd import given, scenario, then, when
+from pytest_bdd import given, then, when
+from pytest_bdd import scenario as _scenario_base
 from typer import Typer
 from typer.testing import CliRunner, Result
 
@@ -24,9 +25,16 @@ from memtab.cli import app
 # boilerplate to shorten the scenario names
 ####################
 feature_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../features")
-scenario = partial(scenario, os.path.join(feature_dir, "Caching.feature"))
+scenario = partial(_scenario_base, os.path.join(feature_dir, "Caching.feature"))
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+class CommandResult(TypedDict):
+    """Typed result dict for a timed memtab command invocation."""
+
+    duration: float
+    result: Result
 
 
 ################################
@@ -94,7 +102,7 @@ def when_i_run_the_command_memtab_clean(memtab: Typer, capsys: CaptureFixture) -
 
 
 @when("I run the same memtab command twice", target_fixture="memtab_command_results")
-def when_i_run_the_same_memtab_command_twice(memtab: Typer, capsys: CaptureFixture) -> Generator[List[Dict[str, Union[float, Result]]], None, None]:
+def when_i_run_the_same_memtab_command_twice(memtab: Typer, capsys: CaptureFixture) -> Generator[List[CommandResult], None, None]:
     """I run the same memtab command twice."""
     elf_file = os.path.join(root_dir, "inputs", "simple_example.elf")
     cfg_file = os.path.join(root_dir, "config", "simple_example.yml")
@@ -106,11 +114,11 @@ def when_i_run_the_same_memtab_command_twice(memtab: Typer, capsys: CaptureFixtu
         intermediate_time = time.time()
         second_run = runner.invoke(memtab, args)
         stop_time = time.time()
-        first_cmd = {
+        first_cmd: CommandResult = {
             "duration": intermediate_time - first_start_time,
             "result": first_run,
         }
-        second_cmd = {
+        second_cmd: CommandResult = {
             "duration": stop_time - intermediate_time,
             "result": second_run,
         }
@@ -129,7 +137,7 @@ def then_the_cache_should_be_cleared(memtab_cache_dir: str, memtab_clean_command
 
 
 @then("the second run should be faster than the first")
-def then_the_second_run_should_be_faster_than_the_first(memtab_command_results: List[Dict[str, Union[float, Result]]]) -> None:
+def then_the_second_run_should_be_faster_than_the_first(memtab_command_results: List[CommandResult]) -> None:
     """the second run should be faster than the first."""
     first_cmd = memtab_command_results[0]
     second_cmd = memtab_command_results[1]

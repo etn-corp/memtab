@@ -11,16 +11,26 @@ This document serves to describe a few of the checks. It is not to be considered
 The purpose of this page is just to document some specific considerations that are related to these checks.
 
 
-Static Type Checking via MyPy
+Static Type Checking via ty
 -----------------------------
 
-I am using this repository to experiment a bit with adding mypy type checking. Python, in general, is a weakly typed language. Objects can be re-cast, accesses/calls can be made on just about anything and you'll just get an AttributeError if it doesn't exist.
-This can be a positive in many ways - it certainly can make development fast, and keeps code concise. However, if you are trying to familiarize yourself with a codebase, untyped variables can be a bit confusing. Mypy attempts to address this by enforcing strong type hints.
-Type hints in python are only used at edit time, they are not used at runtime. you can think of them essentially as "disappearing" at runtime.
+We use `ty <https://docs.astral.sh/ty/>`_ (from Astral, the same team behind ruff and uv) for static type checking.
+Python is a dynamically typed language - type hints are only used at edit time and "disappear" at runtime.
+ty checks those hints statically, catching bugs like wrong argument types, missing attributes, and unreachable code before they cause runtime errors.
 
-That said - I am not sure yet how I feel about the value-add of the level of detail mypy requires. I am not sure if it has increased or decreased code readability, maintainabilty, testability… but we're trying it for now.
+ty is run via the `astral-sh/ty-pre-commit <https://github.com/astral-sh/ty-pre-commit>`_ hook.
+Unlike mypy, ty bundles its own typeshed, so the pre-commit hook requires no ``additional_dependencies`` for standard-library stubs.
+Third-party stub packages (e.g. ``types-pyyaml``) are still installed in the project's virtual environment and ty picks them up automatically.
 
-Mypy configuration resides in the pyproject.toml.
+ty configuration resides in the ``[tool.ty]`` section of ``pyproject.toml``.
+The key settings are:
+
+- ``environment.python-version``: set to match our ``requires-python`` minimum so ty analyzes against the lowest supported interpreter.
+- ``[[tool.ty.overrides]]``: per-path rule overrides (e.g. relaxing ``possibly-unresolved-reference`` to a warning in tests).
+
+ty does **not** warn about missing type annotations (there is no equivalent of mypy's ``disallow_untyped_defs``).
+See the `ty FAQ <https://docs.astral.sh/ty/reference/typing-faq/#why-doesnt-ty-warn-about-missing-type-annotations>`_ for the rationale.
+To suppress a specific ty diagnostic on a single line, use ``# ty: ignore[rule-name]`` (analogous to mypy's ``# type: ignore[code]``).
 
 Documentation Checking via Interrogate
 --------------------------------------

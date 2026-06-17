@@ -6,7 +6,8 @@ import os
 from functools import partial
 from typing import Any, Generator
 
-from pytest_bdd import given, scenario, then, when
+from pytest_bdd import given, then, when
+from pytest_bdd import scenario as _scenario_base
 
 from memtab.memtab import Memtab
 
@@ -14,7 +15,7 @@ from memtab.memtab import Memtab
 # boilerplate to shorten the scenario names
 ####################
 feature_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../features")
-scenario = partial(scenario, os.path.join(feature_dir, "Describe Output Format.feature"))
+scenario = partial(_scenario_base, os.path.join(feature_dir, "Describe Output Format.feature"))
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 

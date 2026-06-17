@@ -8,7 +8,8 @@ from importlib.metadata import version as get_version
 from typing import Generator
 
 from pytest import CaptureFixture
-from pytest_bdd import given, scenario, then, when
+from pytest_bdd import given, then, when
+from pytest_bdd import scenario as _scenario_base
 from typer import Typer
 from typer.testing import CliRunner
 
@@ -18,7 +19,7 @@ from memtab.cli import app, vizapp
 # boilerplate to shorten the scenario names
 ####################
 feature_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../features")
-scenario = partial(scenario, os.path.join(feature_dir, "Version Reporting.feature"))
+scenario = partial(_scenario_base, os.path.join(feature_dir, "Version Reporting.feature"))
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 

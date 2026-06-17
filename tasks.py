@@ -5,11 +5,12 @@
 import os
 from pathlib import Path
 
-from invoke import context, task
+from invoke.context import Context
+from invoke import task
 
 
 @task(aliases=["v"])
-def get_version(c: context) -> None:
+def get_version(c: Context) -> None:
     import toml
 
     with open("pyproject.toml", "r") as f:
@@ -18,7 +19,7 @@ def get_version(c: context) -> None:
 
 
 @task(aliases=["m"])
-def map_regex_tester(c: context) -> None:
+def map_regex_tester(c: Context) -> None:
     """Test out regexes for the map file parser."""
     import re
 
@@ -66,7 +67,7 @@ def map_regex_tester(c: context) -> None:
 
 
 @task(aliases=["mtr"])
-def metrics(c: context) -> None:
+def metrics(c: Context) -> None:
     """Gather basic code metrics, such as lines of code, complexity, etc.
     Uses the radon package, as well as a coverage.xml file if it exists."""
     import json
