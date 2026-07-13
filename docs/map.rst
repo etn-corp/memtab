@@ -41,3 +41,25 @@ This is to facilitate an easier comparison between the two data sources.
 One library we referenced while working on this solution was the `linkermapviz <https://github.com/PromyLOPh/linkermapviz>`_ library.
 Specifically, they had the notion of not processing the output by lines, but instead as a stream.
 They could then do regex pattern matching across multiple lines, which is helpful for processing map files.
+
+*****************************
+Load Address (LMA) Extraction
+*****************************
+
+GNU ld annotates sections that have a separate load address with a ``load address 0x...`` suffix
+in the map file:
+
+.. code-block:: text
+
+    .relocate       0x20000200       0x34 load address 0x0800200c
+
+This tells us the section's bytes live in Flash at ``0x0800200c`` (the LMA) but are accessed at
+runtime from RAM at ``0x20000200`` (the VMA).  Memtab parses these annotations and stores the LMA
+in the ``lma`` field of each ``elf_section`` in the output JSON.
+
+The LMA is then used when calculating Flash region ``spare`` values: any section whose LMA falls
+within a configured Flash region — but whose VMA does not — is counted toward that region's
+usage.  Without this, sections like ``.data`` and ``.ramfunc`` (which are stored in Flash but run
+from RAM) would be invisible to the spare calculation, causing Flash usage to be underreported.
+
+See :ref:`lma-vma` in the :doc:`output` page for a fuller explanation of LMA vs. VMA.

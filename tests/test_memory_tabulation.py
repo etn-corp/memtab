@@ -271,6 +271,11 @@ def test_supplementing_the_elf_file_with_a_map_file() -> None:
     """Supplementing the ELF file with a Map File."""
 
 
+@scenario("LMA sections in Flash are accounted for in the Flash region spare")
+def test_lma_sections_in_flash_accounted_for_in_spare() -> None:
+    """LMA sections in Flash are accounted for in the Flash region spare."""
+
+
 ################################
 # BDD Given Statements
 ################################
@@ -454,6 +459,67 @@ def then_tabulation_should_contain_map_info(results: List[str]) -> None:
             with open(result, "r") as stream:
                 json_response = json.load(stream)
                 verify_map_file_contents_in_json(json_response)
+
+
+@then("sections with a load address in Flash but a runtime address in RAM are counted toward Flash spare.")
+def then_lma_sections_counted_in_flash_spare(results: List[str]) -> None:
+    """Verify that sections with LMA in Flash (e.g. .relocate) are accounted for in Flash spare.
+
+    The blinky.map has .relocate with VMA in RAM (0x20000200) and LMA in Flash (0x0800200c,
+    size 0x34 = 52 bytes). Before this fix those 52 bytes were invisible to the spare
+    calculation. This test checks that they are now counted.
+    """
+    for result in results:
+        if ".json" not in result:
+            continue
+        with open(result, "r") as stream:
+            data = json.load(stream)
+
+        sections = data["elf_sections"]
+        regions = data["regions"]
+
+        def _addr(val: Any) -> int:
+            return int(str(val), 16) if isinstance(val, str) and str(val).startswith("0x") else int(val)
+
+        # Locate the Flash region by type (name is normalised to lowercase in the output)
+        flash = next((r for r in regions if r.get("region") == "Flash"), None)
+        assert flash is not None, "Flash region not found in output"
+        flash_start = _addr(flash["start"])
+        flash_end = _addr(flash["end"])
+        flash_spare = _addr(flash["spare"])
+
+        # Find .relocate and verify its LMA is populated and falls in Flash
+        relocate = next((s for s in sections if s["name"] == ".relocate"), None)
+        assert relocate is not None, ".relocate section missing from elf_sections"
+        lma = _addr(relocate.get("lma", 0))
+        assert lma != 0, ".relocate lma should be non-zero (map file should supply it)"
+        assert lma != _addr(relocate["address"]), ".relocate lma should differ from its VMA"
+        assert flash_start <= lma <= flash_end, f".relocate lma 0x{lma:x} should fall within Flash [{flash_start:#x}, {flash_end:#x}]"
+
+        # The actual Flash usage is: (physical region size) - spare.
+        # spare is initialised from the config size (end - start), so we use end - start here
+        # rather than the 'size' field (which carries a +1 from inclusive-end encoding).
+        actual_flash_usage = (flash_end - flash_start) - flash_spare
+
+        # Expected usage = VMA sections in Flash + non-NOBITS LMA sections in Flash
+        # (NOBITS sections like .bss have no bytes at their LMA even though the
+        # linker assigns one, so they must not be counted.)
+        expected_flash_usage = sum(
+            _addr(s["size"])
+            for s in sections
+            if (flash_start <= _addr(s["address"]) <= flash_end)
+            or (
+                _addr(s.get("lma", 0)) != 0
+                and _addr(s.get("lma", 0)) != _addr(s["address"])
+                and flash_start <= _addr(s.get("lma", 0)) <= flash_end
+                and s.get("type", "") != "NOBITS"
+            )
+        )
+        assert actual_flash_usage == expected_flash_usage, (
+            f"Flash usage {actual_flash_usage} does not match expected {expected_flash_usage} "
+            f"(sections by VMA + non-NOBITS LMA in Flash). .relocate (size={_addr(relocate['size'])}) "
+            f"at LMA=0x{lma:x} should be included."
+        )
 
 
 @then(parsers.re("the (?P<output>[a-zA-Z\s]+) should be correlated to a ground truth."))

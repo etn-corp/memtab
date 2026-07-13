@@ -45,7 +45,7 @@ class ObjDumpParser(MemtabGnuBinUtilsParser):
                         section_name = match.group(2)
                         section_size = int(match.group(3), 16)
                         section_vma = int(match.group(4), 16)
-                        # section_lma = int(match.group(5), 16)
+                        section_lma = int(match.group(5), 16)
 
                         # Extract flags - typically at the end of the line
                         flags = ""
@@ -60,6 +60,6 @@ class ObjDumpParser(MemtabGnuBinUtilsParser):
                         if "CODE" in line:
                             flags += "X"
 
-                        self.result.sections.append(Section(name=section_name, address=section_vma, size=section_size, flags=flags))
+                        self.result.sections.append(Section(name=section_name, address=section_vma, size=section_size, flags=flags, lma=section_lma))
 
                 process_objdump_line(line)
