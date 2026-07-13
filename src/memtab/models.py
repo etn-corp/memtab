@@ -78,6 +78,10 @@ class Section:
     size: int
     flags: str = ""
     type: str = ""
+    lma: int = 0  # Load Memory Address. 0 means not parsed or the same as address (VMA).
+    # When lma != 0 and lma != address, the section's storage location differs from its
+    # runtime address — the classic ROM-based embedded pattern where e.g. a .data init
+    # image lives in Flash (LMA) but the variables are accessed from RAM (VMA).
     calculated_symbol_size: int = 0  # convenience field
     unused: int = 0  # convenience field for unused space in the section
 

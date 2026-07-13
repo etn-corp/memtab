@@ -5,7 +5,7 @@
         "schema_version": {
             "type": "string",
             "description": "The version of the schema.",
-            "const": "1.2.0"
+            "const": "1.3.0"
         },
         "symbols": {
             "$ref": "#/$defs/symbol_array",
@@ -402,6 +402,10 @@
                 "unused": {
                     "$ref": "#/$defs/dec_or_hex",
                     "description": "The amount of unused space at the start of the ELF section. It can be zero if the first symbol is right at the start of the section."
+                },
+                "lma": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "The load memory address (LMA) of the section. When non-zero and different from address, the section is stored at LMA (e.g. Flash) but runs from address/VMA (e.g. RAM). Zero means not parsed or the same as address."
                 }
             },
             "required": [

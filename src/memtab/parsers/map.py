@@ -114,6 +114,8 @@ class MapFileParser(MemtabParser):
         skip_prefixes = ("LOAD", "/DISCARD/", "Linker", "OUTPUT(")
         return any(line.startswith(prefix) for prefix in skip_prefixes)
 
+    _load_addr_re = re.compile(r"load address 0x([0-9a-fA-F]+)")
+
     def __get_sections(self, lines: str) -> None:
         # Section regex for processing map as a continuous stream
         section_regex = re.compile(r"\n(?P<section>[a-zA-Z._]+)(\s+|\n)0x(?P<offset>[0-9a-fA-F]+)\s+0x(?P<size>[0-9a-fA-F/]+)(?P<comment>.*)")
@@ -123,12 +125,18 @@ class MapFileParser(MemtabParser):
             offset = int(match.group("offset"), 16)
             size = int(match.group("size"), 16)
             if offset and size:
+                comment = match.group("comment") or ""
+                lma = 0
+                load_addr_match = self._load_addr_re.search(comment)
+                if load_addr_match:
+                    lma = int(load_addr_match.group(1), 16)
                 self.result.sections.append(
                     Section(
                         name=section,
                         address=offset,
                         size=size,
-                        flags=match.group("comment").strip() if match.group("comment") else "",
+                        flags=comment.strip(),
+                        lma=lma,
                     )
                 )
 

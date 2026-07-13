@@ -46,3 +46,11 @@ Feature: Memory Tabulation of an ELF file
     When I run the memory tabulation command with map arguments
     Then I should see the memory tabulation of the ELF file broken down into JSON output.
     And the memory tabulation should contain additional information only available in the map file.
+
+   Scenario: LMA sections in Flash are accounted for in the Flash region spare
+    Given an ELF file
+    And a map file
+    And no additional environment variables
+    And configuration files describing the memory layout of the target device, the toolchain, and the categories and subcategories of memory
+    When I run the memory tabulation command with map arguments
+    Then sections with a load address in Flash but a runtime address in RAM are counted toward Flash spare.

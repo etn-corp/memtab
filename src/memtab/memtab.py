@@ -455,6 +455,7 @@ class Memtab:
                     "size": section.size,
                     "flags": section.flags,
                     "type": getattr(section, "type", ""),
+                    "lma": section.lma,
                     "calculated_symbol_size": section.calculated_symbol_size,
                     "unused": section.unused,
                 }
@@ -497,8 +498,28 @@ class Memtab:
             # Use elf_sections instead of symbols for more accurate region usage
             # Sections represent actual memory allocation, symbols may have gaps
             region_idx_int = cast(int, region_idx)
-            region_sections = self.sections[(self.sections["address"] >= region["start"]) & (self.sections["address"] <= region["end"])]
-            region_size = region_sections["size"].sum()
+
+            # Sections whose VMA (runtime address) falls within this region
+            vma_mask = (self.sections["address"] >= region["start"]) & (self.sections["address"] <= region["end"])
+
+            # Sections whose LMA (load/storage address) falls within this region but VMA does not.
+            # Only sections with actual stored content are counted — NOBITS sections (.bss,
+            # .noinit, etc.) have no bytes at their LMA even though the linker assigns one.
+            if "lma" in self.sections.columns:
+                lma_mask = (
+                    (self.sections["lma"] != 0)
+                    & (self.sections["lma"] != self.sections["address"])
+                    & (self.sections["type"] != "NOBITS")
+                    & (self.sections["lma"] >= region["start"])
+                    & (self.sections["lma"] <= region["end"])
+                )
+            else:
+                lma_mask = vma_mask & False  # empty mask when lma column not present
+
+            # Union the two masks to avoid double-counting a section whose VMA and LMA
+            # both happen to fall in the same region (unusual but possible).
+            region_size = self.sections[vma_mask | lma_mask]["size"].sum()
+
             self.regions.loc[region_idx_int, "spare"] -= region_size
             spare = cast(int, self.regions.loc[region_idx_int, "spare"])
             if spare < 0:
@@ -713,6 +734,13 @@ class Memtab:
         return str(self.__elf)
 
     # region map tabulation
+    def __propagate_section_lma(self, lma_source: List[Section], targets: List[Section]) -> None:
+        """Copy non-trivial LMA values from source sections to matching target sections by name."""
+        lma_by_name: Dict[str, int] = {s.name: s.lma for s in lma_source if s.lma != 0 and s.lma != s.address}
+        for section in targets:
+            if section.name in lma_by_name:
+                section.lma = lma_by_name[section.name]
+
     def __merge_results(self, results: Dict[str, ParserResult]) -> ParserResult:
         """Compares the map file against the ELF file, and ensures that the symbols in the map file match the symbols in the ELF file."""
         nm_results = results["nm"]
@@ -720,6 +748,12 @@ class Memtab:
         return_results = ParserResult()
         return_results.symbols = nm_results.symbols.copy()
         return_results.sections = readelf_results.sections.copy()
+
+        # Propagate LMA from objdump into readelf sections.
+        # objdump -wh lists both VMA and LMA columns; readelf -SW only has VMA.
+        # Use .get() so this is a no-op when objdump results are absent.
+        self.__propagate_section_lma(results.get("objdump", ParserResult()).sections, return_results.sections)
+
         if "map" in results:  # at the moment, nothing to merge otherwise
             map_results = results["map"]
 
@@ -784,5 +818,9 @@ class Memtab:
 
             extra_map_symbols = __compare_map_symbols_against_nm_symbols(map_results.symbols, nm_results.symbols)
             return_results.symbols.extend(extra_map_symbols)
+
+            # Propagate LMA from map sections into readelf sections.
+            # Map "load address" annotations are explicit; they take priority over objdump.
+            self.__propagate_section_lma(map_results.sections, return_results.sections)
 
         return return_results

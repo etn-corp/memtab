@@ -58,3 +58,68 @@ There are three distinct scenarios when comparing ``size`` to ``assigned_size``:
 
 
 With these definitions, the design intent is that the sum of ``assigned_size`` should add up to the available size of flash memory.
+
+.. note::
+
+   ``assigned_size`` reflects bytes occupied at **runtime** (VMA space).  For targets where
+   initialized data sections (e.g. ``.data``, ``.ramfunc``) are stored in Flash but copied to
+   RAM at startup, a symbol's ``assigned_size`` describes its RAM footprint.  The Flash storage
+   footprint of those bytes is identical in size, but accounted for at the *section* level via
+   the ``lma`` field — see `lma-vma`_ below.
+
+
+.. _lma-vma:
+
+*****************************
+LMA vs. VMA in ELF Sections
+*****************************
+
+Every entry in ``elf_sections`` carries two address fields:
+
+- **``address``** — the *Virtual Memory Address* (VMA): where the section is accessed at runtime.
+- **``lma``** — the *Load Memory Address*: where the section's bytes are physically stored.  A
+  value of ``0`` means the LMA was not parsed or is the same as ``address``.
+
+For most sections (e.g. ``.text``, ``.rodata`` in a typical Flash-based MCU build), ``lma == address``.
+The important exception is initialized data:
+
+.. code-block:: text
+
+    .data    0x20000200    0x34    load address 0x0800200c
+    ↑ VMA (RAM, runtime)            ↑ LMA (Flash, storage)
+
+Here the ``.data`` init image occupies Flash at ``0x0800200c`` and is copied to RAM at
+``0x20000200`` by the startup (``crt0``) code before ``main()`` runs.
+
+Memtab uses the ``lma`` field when calculating region spare values: sections whose LMA (not
+only VMA) falls within a Flash region are counted toward that region's usage.  This ensures
+the Flash spare is not overstated for targets that copy initialized data from Flash to RAM
+at boot — a pattern used by every ROM-based MCU build.
+
+Sections typed ``NOBITS`` (e.g. ``.bss``, ``.noinit``) are **excluded** from the LMA check even
+when the linker assigns them a load address, because they contain no bytes in the binary.
+
+
+*****************************
+Flash Usage with ``jq``
+*****************************
+
+.. note::
+
+   The ``jq`` snippet below uses the ``lma`` field introduced in schema 1.3.0.  On older output
+   files (schema 1.2.0) ``lma`` is absent; use ``select(.address < 0x20000000)`` as a simpler
+   approximation.
+
+To compute true Flash consumption on an ARM Cortex-M target (Flash below ``0x20000000``, RAM at
+or above), include both VMA sections and non-NOBITS sections whose LMA is in Flash:
+
+.. code-block:: bash
+
+    jq '
+      [.elf_sections[] |
+        select(
+          (.address < 0x20000000) or
+          ((.lma // 0) != 0 and (.lma // 0) != .address and (.lma // 0) < 0x20000000
+           and .type != "NOBITS")
+        )
+      ] | map(.size) | add' memtab.json
