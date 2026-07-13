@@ -509,6 +509,7 @@ class Memtab:
                 lma_mask = (
                     (self.sections["lma"] != 0)
                     & (self.sections["lma"] != self.sections["address"])
+                    & (~vma_mask)  # exclude sections already counted via VMA
                     & (self.sections["type"] != "NOBITS")
                     & (self.sections["lma"] >= region["start"])
                     & (self.sections["lma"] <= region["end"])
@@ -516,8 +517,7 @@ class Memtab:
             else:
                 lma_mask = vma_mask & False  # empty mask when lma column not present
 
-            # Union the two masks to avoid double-counting a section whose VMA and LMA
-            # both happen to fall in the same region (unusual but possible).
+            # Union: VMA-matched sections + LMA-only-matched sections (no overlap by construction).
             region_size = self.sections[vma_mask | lma_mask]["size"].sum()
 
             self.regions.loc[region_idx_int, "spare"] -= region_size

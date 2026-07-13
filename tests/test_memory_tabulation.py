@@ -481,7 +481,8 @@ def then_lma_sections_counted_in_flash_spare(results: List[str]) -> None:
         def _addr(val: Any) -> int:
             return int(str(val), 16) if isinstance(val, str) and str(val).startswith("0x") else int(val)
 
-        # Locate the Flash region by type (name is normalised to lowercase in the output)
+        # Locate the Flash region by region type ("Flash"), not by name — the config name
+        # (e.g. "FLASH") is normalised to lowercase in the output, so using region type is robust.
         flash = next((r for r in regions if r.get("region") == "Flash"), None)
         assert flash is not None, "Flash region not found in output"
         flash_start = _addr(flash["start"])
