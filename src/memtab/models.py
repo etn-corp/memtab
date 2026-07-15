@@ -29,6 +29,8 @@ class Symbol:
     elf_section: str = ""  # e.g., ".text", ".data", ".bss"
     commit: str = "unknown"  # git commit hash
     repo: str = ""  # git repository URL
+    exidx_size: int = 0  # bytes from .ARM.exidx attributed to this symbol
+    extab_size: int = 0  # bytes from .ARM.extab attributed to this symbol
     categories: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -46,6 +48,8 @@ class Symbol:
             "categories": self.categories,
             "commit": self.commit,
             "repo": self.repo,
+            "exidx_size": self.exidx_size,
+            "extab_size": self.extab_size,
         }
 
     def __hash__(self) -> int:

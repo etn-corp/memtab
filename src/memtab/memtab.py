@@ -14,6 +14,7 @@ import logging
 import os
 import shutil
 import warnings
+from collections import defaultdict
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -392,6 +393,9 @@ class Memtab:
         ]
         self.__assign_sections_to_symbols(filtered_sections)
 
+        # Attribute ARM unwind tables to the owning symbols when ARM sections are included.
+        self.__attribute_arm_unwind_tables()
+
         # Apply category assignments after all data is processed
         self.__categorize_symbols()
 
@@ -570,6 +574,165 @@ class Memtab:
 
                 self.sections.loc[self.sections.name == section.name, "unused"] = min(section_symbols.index) - section.address
 
+    @staticmethod
+    def __decode_prel31(raw_word: int, place: int) -> int:
+        """Decode a PREL31 encoded pointer relative to the address of the encoded word."""
+        offset = raw_word & 0x7FFFFFFF
+        if offset & 0x40000000:
+            offset -= 0x80000000
+        return place + offset
+
+    def __find_symbol_for_address(self, addr: int) -> Optional[int]:
+        """Find the best symbol to own an address, preferring exact match then nearest previous symbol."""
+        if self.symbols.empty:
+            return None
+
+        if addr in self.symbols.index:
+            return int(addr)
+
+        insert_idx = cast(int, self.symbols.index.searchsorted(addr, side="right")) - 1
+        if insert_idx < 0:
+            return cast(int, self.symbols.index[0])
+
+        owner_addr = cast(int, self.symbols.index[insert_idx])
+        owner_size = cast(int, self.symbols.at[owner_addr, "assigned_size"]) if "assigned_size" in self.symbols.columns else cast(int, self.symbols.at[owner_addr, "size"])
+        owner_end = owner_addr + max(owner_size, 1)
+        if owner_addr <= addr < owner_end:
+            return owner_addr
+        return owner_addr
+
+    def __initialize_unwind_columns(self) -> None:
+        """Ensure unwind attribution columns exist and are numeric."""
+        if "exidx_size" not in self.symbols.columns:
+            self.symbols["exidx_size"] = 0
+        else:
+            self.symbols["exidx_size"] = self.symbols["exidx_size"].fillna(0)
+
+        if "extab_size" not in self.symbols.columns:
+            self.symbols["extab_size"] = 0
+        else:
+            self.symbols["extab_size"] = self.symbols["extab_size"].fillna(0)
+
+    def __collect_arm_unwind_refs(
+        self,
+        exidx_data: bytes,
+        exidx_base: int,
+        entry_count: int,
+        extab_base: int,
+        extab_end: int,
+    ) -> Tuple[List[Tuple[int, int]], Dict[int, int]]:
+        """Collect extab references and attribute fixed exidx bytes per entry."""
+        entry_refs: List[Tuple[int, int]] = []
+        extab_ref_counts: Dict[int, int] = defaultdict(int)
+
+        for i in range(entry_count):
+            entry_offset = i * 8
+            word0 = int.from_bytes(exidx_data[entry_offset : entry_offset + 4], "little")
+            word1 = int.from_bytes(exidx_data[entry_offset + 4 : entry_offset + 8], "little")
+
+            entry_addr = exidx_base + entry_offset
+            function_addr = self.__decode_prel31(word0, entry_addr)
+            symbol_addr = self.__find_symbol_for_address(function_addr)
+
+            if symbol_addr is not None:
+                self.symbols.at[symbol_addr, "exidx_size"] = cast(int, self.symbols.at[symbol_addr, "exidx_size"]) + 8
+
+            if symbol_addr is None:
+                continue
+            if word1 == 0x00000001 or (word1 & 0x80000000):
+                continue
+            if extab_end <= extab_base:
+                continue
+
+            extab_addr = self.__decode_prel31(word1, entry_addr + 4)
+            if extab_base <= extab_addr < extab_end:
+                entry_refs.append((symbol_addr, extab_addr))
+                extab_ref_counts[extab_addr] += 1
+
+        return entry_refs, extab_ref_counts
+
+    def __attribute_extab_sizes(self, entry_refs: List[Tuple[int, int]], extab_ref_counts: Dict[int, int], extab_end: int) -> None:
+        """Distribute extab bytes across referenced symbols."""
+        if not entry_refs:
+            return
+
+        extab_offsets = sorted(extab_ref_counts.keys())
+        extab_sizes: Dict[int, int] = {}
+        for idx, extab_addr in enumerate(extab_offsets):
+            next_addr = extab_offsets[idx + 1] if idx + 1 < len(extab_offsets) else extab_end
+            extab_sizes[extab_addr] = max(0, next_addr - extab_addr)
+
+        seen_per_ref: Dict[int, int] = defaultdict(int)
+        for symbol_addr, extab_addr in entry_refs:
+            ref_count = extab_ref_counts.get(extab_addr, 0)
+            if ref_count <= 0:
+                continue
+
+            total_size = extab_sizes.get(extab_addr, 0)
+            base_share = total_size // ref_count
+            remainder = total_size % ref_count
+            seq = seen_per_ref[extab_addr]
+            seen_per_ref[extab_addr] += 1
+            symbol_share = base_share + (1 if seq < remainder else 0)
+
+            self.symbols.at[symbol_addr, "extab_size"] = cast(int, self.symbols.at[symbol_addr, "extab_size"]) + symbol_share
+
+    def __update_unwind_section_totals(self, exidx_size: int, extab_size: int) -> None:
+        """Update section-level attributed/unattributed totals for ARM unwind sections."""
+        if "attributed_size" not in self.sections.columns:
+            self.sections["attributed_size"] = 0
+        if "unattributed_size" not in self.sections.columns:
+            self.sections["unattributed_size"] = 0
+
+        exidx_attributed = int(self.symbols["exidx_size"].sum())
+        extab_attributed = int(self.symbols["extab_size"].sum())
+
+        self.sections.loc[self.sections.name == ".ARM.exidx", "attributed_size"] = exidx_attributed
+        self.sections.loc[self.sections.name == ".ARM.exidx", "unattributed_size"] = max(0, exidx_size - exidx_attributed)
+
+        if extab_size > 0:
+            self.sections.loc[self.sections.name == ".ARM.extab", "attributed_size"] = extab_attributed
+            self.sections.loc[self.sections.name == ".ARM.extab", "unattributed_size"] = max(0, extab_size - extab_attributed)
+
+    def __attribute_arm_unwind_tables(self) -> None:
+        """Attribute .ARM.exidx/.ARM.extab bytes to owning symbols."""
+        if self.config.CPU.exclude_arm_sections:
+            return
+        if not self.elf:
+            return
+
+        self.__initialize_unwind_columns()
+
+        with open(self.elf, "rb") as stream:
+            elf_file = ELFFile(stream)
+            exidx_section = elf_file.get_section_by_name(".ARM.exidx")
+            extab_section = elf_file.get_section_by_name(".ARM.extab")
+
+            if exidx_section is None:
+                return
+
+            exidx_data = exidx_section.data()
+            if not exidx_data:
+                return
+
+            exidx_base = int(exidx_section["sh_addr"])
+            exidx_size = int(exidx_section["sh_size"])
+            entry_count = exidx_size // 8
+
+            extab_base = int(extab_section["sh_addr"]) if extab_section is not None else 0
+            extab_end = extab_base + int(extab_section["sh_size"]) if extab_section is not None else 0
+
+            entry_refs, extab_ref_counts = self.__collect_arm_unwind_refs(
+                exidx_data=exidx_data,
+                exidx_base=exidx_base,
+                entry_count=entry_count,
+                extab_base=extab_base,
+                extab_end=extab_end,
+            )
+            self.__attribute_extab_sizes(entry_refs=entry_refs, extab_ref_counts=extab_ref_counts, extab_end=extab_end)
+            extab_size = int(extab_section["sh_size"]) if extab_section is not None else 0
+            self.__update_unwind_section_totals(exidx_size=exidx_size, extab_size=extab_size)
+
     def __categorize_symbols(self) -> None:
         """Categorize symbols based on configured patterns."""
         if not self.__config.SourceCode.categories:
@@ -691,7 +854,7 @@ class Memtab:
         symbols_df = pd.DataFrame(value["symbols"])
         if not symbols_df.empty:
             # Convert hex strings to integers for numeric columns
-            hex_columns = ["address", "size", "assigned_size", "start", "end"]
+            hex_columns = ["address", "size", "assigned_size", "exidx_size", "extab_size", "start", "end"]
 
             for col in hex_columns:
                 if col in symbols_df.columns and symbols_df[col].dtype == object:  # Check if column exists and contains strings

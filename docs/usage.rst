@@ -238,8 +238,10 @@ CPU Section Filtering Options
 The CPU section of the configuration supports three optional boolean flags that control how ELF sections are filtered:
 
 - **exclude_arm_sections** (default: ``true``): When true, filters out ARM-specific sections like
-  ``.ARM.extab`` and ``.ARM.exidx``. These sections contain exception handling and unwinding information.
-  Set to ``false`` if you want to include these sections in your memory analysis (they do consume Flash space).
+   ``.ARM.extab`` and ``.ARM.exidx``. These sections contain exception handling and unwinding information.
+
+   Set to ``false`` if you want to include these sections in your memory analysis (they do consume Flash space).
+   When included, memtab also emits symbol-level ``exidx_size`` and ``extab_size`` fields in JSON output.
 
 - **exclude_debug_sections** (default: ``true``): When true, filters out debug-related sections like
   ``.debug_*``, ``.eh_frame``, ``.dynsym``, and ``.comment``. These are typically not loaded into device memory.

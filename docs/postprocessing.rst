@@ -50,7 +50,7 @@ Memtab provides multiple ways to calculate memory usage, each serving different 
 
 When you sum up symbol sizes, you'll typically get a **lower number** than the total ELF section sizes because sections contain more than just symbols:
 
-- **Exception handling tables** (``.ARM.extab``, ``.ARM.exidx``) - compiler-generated unwinding information with no individual symbols
+- **Exception handling tables** (``.ARM.extab``, ``.ARM.exidx``) - compiler-generated unwinding information; when ARM sections are included, memtab also reports per-symbol ``exidx_size`` and ``extab_size`` attribution
 - **Initialization arrays** (``init_array``, ``ctors``) - lists of function pointers without individual symbol names
 - **Padding and alignment** - gaps between symbols for proper memory alignment
 - **Section metadata** - attributes and bookkeeping information
@@ -165,7 +165,7 @@ Each ELF section also includes a ``calculated_symbol_size`` field showing how mu
     # Compare section sizes to symbol coverage
     jq '.elf_sections[] | {name, size, calculated_symbol_size, gap: (.size - .calculated_symbol_size)}' memtab.json
 
-Sections with zero ``calculated_symbol_size`` (like ``.ARM.extab``, ``.ARM.exidx``) contain compiler-generated data without individual symbol names.
+Sections with zero ``calculated_symbol_size`` can still contain compiler-generated data. For ARM unwind sections, use symbol-level ``exidx_size`` and ``extab_size`` to inspect the attributed cost.
 
 Approximating ``size`` Command Output
 --------------------------------------

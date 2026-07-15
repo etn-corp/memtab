@@ -276,6 +276,11 @@ def test_lma_sections_in_flash_accounted_for_in_spare() -> None:
     """LMA sections in Flash are accounted for in the Flash region spare."""
 
 
+@scenario("ARM unwind sections are attributed to owning symbols")
+def test_arm_unwind_sections_are_attributed_to_owning_symbols() -> None:
+    """ARM unwind sections are attributed to owning symbols."""
+
+
 ################################
 # BDD Given Statements
 ################################
@@ -327,6 +332,8 @@ def given_configuration_files(configuration: str) -> Generator[List[Optional[str
         config_lookup = {
             "x86": "hello-world.yml",
             "arm": "blinky.yml",
+            # Alias used by the ARM attribution scenario; we do not require a separate file.
+            "blinky_arm": "blinky.yml",
             "cube": "simple_example.yml",
             "configuration": "simple_example.yml",
             "local_source": "local_source.yml",
@@ -521,6 +528,39 @@ def then_lma_sections_counted_in_flash_spare(results: List[str]) -> None:
             f"(sections by VMA + non-NOBITS LMA in Flash). .relocate (size={_addr(relocate['size'])}) "
             f"at LMA=0x{lma:x} should be included."
         )
+
+
+@then("ARM unwind table bytes should be attributed to owning symbols.")
+def then_arm_unwind_tables_attributed_to_symbols(results: List[str]) -> None:
+    """Verify exidx/extab bytes are attributed to symbols and reconcile with section sizes."""
+
+    def _addr(value: Any) -> int:
+        return int(str(value), 16) if isinstance(value, str) and str(value).startswith("0x") else int(value)
+
+    for result in results:
+        if ".json" not in result:
+            continue
+
+        with open(result, "r") as stream:
+            data = json.load(stream)
+
+        sections = data["elf_sections"]
+        symbols = data["symbols"]
+
+        exidx_section = next((s for s in sections if s["name"] == ".ARM.exidx"), None)
+        extab_section = next((s for s in sections if s["name"] == ".ARM.extab"), None)
+        if exidx_section is None or extab_section is None:
+            return
+
+        symbol_exidx_total = sum(_addr(symbol.get("exidx_size", 0)) for symbol in symbols)
+        symbol_extab_total = sum(_addr(symbol.get("extab_size", 0)) for symbol in symbols)
+
+        assert any("exidx_size" in symbol for symbol in symbols), "Symbols are missing exidx_size"
+        assert any("extab_size" in symbol for symbol in symbols), "Symbols are missing extab_size"
+        assert any(_addr(symbol.get("exidx_size", 0)) > 0 for symbol in symbols), "Expected at least one symbol with non-zero exidx_size"
+
+        assert symbol_exidx_total == _addr(exidx_section["size"]), f"Sum of symbol exidx_size ({symbol_exidx_total}) should match .ARM.exidx size ({_addr(exidx_section['size'])})"
+        assert symbol_extab_total == _addr(extab_section["size"]), f"Sum of symbol extab_size ({symbol_extab_total}) should match .ARM.extab size ({_addr(extab_section['size'])})"
 
 
 @then(parsers.re("the (?P<output>[a-zA-Z\s]+) should be correlated to a ground truth."))
