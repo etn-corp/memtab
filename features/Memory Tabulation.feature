@@ -54,3 +54,10 @@ Feature: Memory Tabulation of an ELF file
     And configuration files describing the memory layout of the target device, the toolchain, and the categories and subcategories of memory
     When I run the memory tabulation command with map arguments
     Then sections with a load address in Flash but a runtime address in RAM are counted toward Flash spare.
+
+  Scenario: ARM unwind sections are attributed to owning symbols
+   Given a blinky ELF file
+   And blinky_arm files describing the memory layout of the target device, the toolchain, and the categories and subcategories of memory
+   And no additional environment variables
+   When I run the memory tabulation command with map arguments
+   Then ARM unwind table bytes should be attributed to owning symbols.

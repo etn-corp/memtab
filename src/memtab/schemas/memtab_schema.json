@@ -120,6 +120,16 @@
                     "type": "integer",
                     "minimum": 0,
                     "description": "The assigned size of the symbol. If its greater than size, there is some unused memory above. If it is less than size, there is shared memory with another adjacent symbol."
+                },
+                "exidx_size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bytes attributed to this symbol from the .ARM.exidx unwind index section."
+                },
+                "extab_size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bytes attributed to this symbol from the .ARM.extab unwind table section."
                 }
             },
             "required": [
@@ -406,6 +416,14 @@
                 "lma": {
                     "$ref": "#/$defs/dec_or_hex",
                     "description": "The load memory address (LMA) of the section. When non-zero and different from address, the section is stored at LMA (e.g. Flash) but runs from address/VMA (e.g. RAM). Zero means not parsed or the same as address."
+                },
+                "attributed_size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "For sections with symbol attribution extensions, the number of bytes that were attributed to symbols."
+                },
+                "unattributed_size": {
+                    "$ref": "#/$defs/dec_or_hex",
+                    "description": "For sections with symbol attribution extensions, the number of bytes that could not be attributed to symbols."
                 }
             },
             "required": [

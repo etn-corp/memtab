@@ -100,6 +100,23 @@ Sections typed ``NOBITS`` (e.g. ``.bss``, ``.noinit``) are **excluded** from the
 when the linker assigns them a load address, because they contain no bytes in the binary.
 
 
+********************************
+ARM Unwind Attribution
+********************************
+
+When ``CPU.exclude_arm_sections`` is set to ``false``, memtab attributes ARM unwind bytes to
+symbols using ``.ARM.exidx`` ownership information:
+
+- ``exidx_size``: bytes from ``.ARM.exidx`` attributed to a symbol
+- ``extab_size``: bytes from ``.ARM.extab`` attributed to a symbol
+
+Each ``.ARM.exidx`` entry contributes 8 bytes to the owning function. Entries that reference
+``.ARM.extab`` contribute additional bytes based on the decoded table entry ranges.
+
+These fields are additive attribution data and are reported alongside ``size`` and
+``assigned_size`` for symbol-level analysis of exception handling overhead.
+
+
 *****************************
 Flash Usage with ``jq``
 *****************************

@@ -61,3 +61,6 @@ def when_i_run_the_schema_command(memtab: Memtab) -> Generator[Any, None, None]:
 def then_i_should_be_provided_the_schema_file(schema: Any) -> None:
     """I should be provided the schema file."""
     assert len(schema) > 0
+    symbol_props = schema["$defs"]["memory_symbol"]["properties"]
+    assert "exidx_size" in symbol_props
+    assert "extab_size" in symbol_props

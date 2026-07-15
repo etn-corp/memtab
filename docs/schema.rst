@@ -9,5 +9,10 @@ Output Schema
 
 The output schema is described in the `src/memtab/schemas/memtab-schema.json` file.
 
+The symbol schema includes optional ARM unwind attribution fields:
+
+- ``exidx_size``
+- ``extab_size``
+
 
 This schema is made accessible to other libraries via the `Memtab().schema` property.
