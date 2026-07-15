@@ -12,6 +12,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
+import pandas as pd
 import yaml
 from jsonschema import validate
 from pytest import CaptureFixture
@@ -20,6 +21,7 @@ from pytest_bdd import scenario as _scenario_base
 from typer.testing import CliRunner
 
 from memtab.cli import app
+from memtab.memtab import Memtab
 
 ####################
 # boilerplate to shorten the scenario names
@@ -582,3 +584,21 @@ def then_output_should_be_correlated_to_ground_truth(elf_file: str, config_files
                     assert len(json_response["elf_sections"]) == section_count, (
                         f"Expected exactly {section_count} sections, got {len(json_response['elf_sections'])} sections in {result}"
                     )
+
+
+def test_find_symbol_for_address_returns_none_outside_symbol_range() -> None:
+    """The address lookup should not attribute bytes to symbols outside known ranges."""
+    tabulator = object.__new__(Memtab)
+    tabulator.symbols = pd.DataFrame(
+        {
+            "symbol": ["first", "second"],
+            "size": [4, 8],
+            "assigned_size": [4, 8],
+        },
+        index=[100, 200],
+    )
+
+    assert tabulator._Memtab__find_symbol_for_address(50) is None
+    assert tabulator._Memtab__find_symbol_for_address(150) is None
+    assert tabulator._Memtab__find_symbol_for_address(100) == 100
+    assert tabulator._Memtab__find_symbol_for_address(205) == 200
