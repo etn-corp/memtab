@@ -592,14 +592,12 @@ class Memtab:
 
         insert_idx = cast(int, self.symbols.index.searchsorted(addr, side="right")) - 1
         if insert_idx < 0:
-            return cast(int, self.symbols.index[0])
+            return None
 
         owner_addr = cast(int, self.symbols.index[insert_idx])
         owner_size = cast(int, self.symbols.at[owner_addr, "assigned_size"]) if "assigned_size" in self.symbols.columns else cast(int, self.symbols.at[owner_addr, "size"])
         owner_end = owner_addr + max(owner_size, 1)
-        if owner_addr <= addr < owner_end:
-            return owner_addr
-        return owner_addr
+        return owner_addr if owner_addr <= addr < owner_end else None
 
     def __initialize_unwind_columns(self) -> None:
         """Ensure unwind attribution columns exist and are numeric."""
