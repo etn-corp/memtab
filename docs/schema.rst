@@ -7,7 +7,7 @@ This project leverages schemas to help describe the shape of input configuration
 Output Schema
 ----------------
 
-The output schema is described in the `src/memtab/schemas/memtab-schema.json` file.
+The output schema is described in the `src/memtab/schemas/memtab_schema.json` file.
 
 The symbol schema includes optional ARM unwind attribution fields:
 
