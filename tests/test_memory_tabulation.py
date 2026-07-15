@@ -549,8 +549,7 @@ def then_arm_unwind_tables_attributed_to_symbols(results: List[str]) -> None:
 
         exidx_section = next((s for s in sections if s["name"] == ".ARM.exidx"), None)
         extab_section = next((s for s in sections if s["name"] == ".ARM.extab"), None)
-        if exidx_section is None or extab_section is None:
-            return
+        assert exidx_section is not None and extab_section is not None, "Expected .ARM.exidx and .ARM.extab to be present in elf_sections output"
 
         symbol_exidx_total = sum(_addr(symbol.get("exidx_size", 0)) for symbol in symbols)
         symbol_extab_total = sum(_addr(symbol.get("extab_size", 0)) for symbol in symbols)
