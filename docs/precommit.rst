@@ -3,8 +3,8 @@ Pre-Commit Checks
 
 
 The pre-commit checks are used for the "quick and easy" enforcement of basic code quality standards.
-If you run `pre-commit install`, then these checks are run on every commit, and if they fail, the commit will be rejected.
-The checks are run using the `pre-commit` tool, which is a python package that can be installed via pip.
+If you run `prek install`, then these checks are run on every commit, and if they fail, the commit will be rejected.
+The checks are run using the `prek` tool, a Rust-native drop-in alternative to pre-commit. It can be installed via ``uv tool install prek``.
 
 
 This document serves to describe a few of the checks. It is not to be considered exhaustive - checks may be added or removed over time, and the best way to see what checks are currently being run is to look at the `.pre-commit-config.yaml` file.
@@ -18,8 +18,8 @@ We use `ty <https://docs.astral.sh/ty/>`_ (from Astral, the same team behind ruf
 Python is a dynamically typed language - type hints are only used at edit time and "disappear" at runtime.
 ty checks those hints statically, catching bugs like wrong argument types, missing attributes, and unreachable code before they cause runtime errors.
 
-ty is run via the `astral-sh/ty-pre-commit <https://github.com/astral-sh/ty-pre-commit>`_ hook.
-Unlike mypy, ty bundles its own typeshed, so the pre-commit hook requires no ``additional_dependencies`` for standard-library stubs.
+ty is run via the `astral-sh/ty-pre-commit <https://github.com/astral-sh/ty-pre-commit>`_ hook (which prek uses from the pre-commit hook ecosystem).
+Unlike mypy, ty bundles its own typeshed, so the hook requires no ``additional_dependencies`` for standard-library stubs.
 Third-party stub packages (e.g. ``types-pyyaml``) are still installed in the project's virtual environment and ty picks them up automatically.
 
 ty configuration resides in the ``[tool.ty]`` section of ``pyproject.toml``.
@@ -46,7 +46,7 @@ We are using xenon to enforce a code complexiity measure. We require everything 
 Code Formatting via Ruff
 ------------------------
 
-There are many python formatters available. I am of the opinion that __which__ one you choose is less important than __using__ one. I have chosen to use ruff, as it is fast and has a lot of features. It is also the default formatter for pre-commit, so it is easy to use in that regard.
+There are many python formatters available. I am of the opinion that __which__ one you choose is less important than __using__ one. I have chosen to use ruff, as it is fast and has a lot of features, and integrates well with prek.
 
 Gherkin Formatting via Gherkin Lint
 -----------------------------------

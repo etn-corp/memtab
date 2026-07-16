@@ -106,15 +106,15 @@ To run tests, use ``uv`` with coverage:
 Pre-commit Hooks
 ~~~~~~~~~~~~~~~~
 
-We use ``pre-commit`` to ensure code quality and consistency. After cloning the project, install the pre-commit hooks by running:
+We use ``prek`` to ensure code quality and consistency. After cloning the project, install the pre-commit hooks by running:
 
 .. code-block:: sh
 
-   pre-commit install
+   prek install
 
-For more information on ``pre-commit``, visit the `pre-commit website <https://pre-commit.com/>`_.
+For more information on ``prek``, visit the `prek project page <https://github.com/j178/prek/>`_.
 
-We also have a GitHub Action that runs ``pre-commit`` checks on every push and pull request, so you can rely on that if you prefer not to install ``pre-commit`` locally.
+We also have a GitHub Action that runs ``prek`` checks on every push and pull request, so you can rely on that if you prefer not to install ``prek`` locally.
 
 Contribution Guidelines
 -----------------------
