@@ -16,9 +16,9 @@ We use ruff for code formatting and linting.
 
 We use interrogate to ensure docstring coverage.
 
-We use pre-commit for managing code formatting and linting (leveraging the above tools in that, as well as some others).
+We use `prek` for managing code formatting and linting (leveraging the above tools in that, as well as some others).
 
-As much as possible, we try to put linter and test configuration in the pyproject.toml file, so the exact same configuration can be used in different environments (e.g., local, CI/CD, etc.), and by pre-commit and any IDE the developers may choose.
+As much as possible, we try to put linter and test configuration in the pyproject.toml file, so the exact same configuration can be used in different environments (e.g., local, CI/CD, etc.), and by prek and any IDE the developers may choose.
 
 All "production" code is in the src directory.
 
@@ -30,11 +30,11 @@ We favor using pandas/dataframe constructs as much as possible for storing the s
 
 As part of using `uv`, that tends to be the way we run the code, e.g. `uv run src/memtab.py`, or `uv run pytest`.  Do that instead of just `pytest`.
 
-The exception to the above is when running `pre-commit`, which manages its _own_ virtual environment.  So in the case of pre-commit things (like `ruff`, `interrogate`, etc.), we should run `pre-commit run ruff` etc., not just `ruff`, to ensure that the pre-commit hooks are run using pre-commit's environment.
+The exception to the above is when running `prek`, which manages its _own_ hook environments.  So in the case of prek hooks (like `ruff`, `interrogate`, etc.), we should run `prek run ruff` etc., not just `ruff`, to ensure that the hooks are run using prek's managed environment.
 
-Note: Prefer running `ty` via `uv check` for local development; pre-commit may also run `ty`, but the hook downloads a standalone binary that can require additional SSL trust configuration in some environments.
+Note: Prefer running `ty` via `uv check` for local development; prek may also run `ty`, but the hook downloads a standalone binary that can require additional SSL trust configuration in some environments.
 
-Basically, between `uv` and `pre-commit`, if you are running a command that depends on python, it should be through those tools, not the native python environment.
+Basically, between `uv` and `prek`, if you are running a command that depends on python, it should be through those tools, not the native python environment.
 
 We follow [semantic versioning](https://semver.org/) for versioning.
 
